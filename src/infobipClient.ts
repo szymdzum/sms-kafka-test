@@ -1,9 +1,8 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
+
 import logger from './logger';
 import { createCircuitBreaker, retryWithBackoff } from './retryUtils';
 
-dotenv.config();
 
 const INFOBIP_BASE_URL = process.env.INFOBIP_BASE_URL || 'https://pev4gm.api.infobip.com';
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
@@ -36,22 +35,56 @@ async function callInfobipApi(phoneNumber: string, text: string, senderId?: stri
       {
         from: actualSenderId,
         destinations: [{ to: formattedNumber }],
-        text: text
+        content: {
+          text: text
+        }
       }
     ]
   };
 
   logger.debug('Calling Infobip API', { to: formattedNumber, sender: actualSenderId });
-  const response = await apiClient.post<InfobipResponse>('/sms/3/messages', payload);
 
-  return {
-    messageId: response.data.messages?.[0]?.messageId || 'unknown',
-    status: response.data.messages?.[0]?.status?.name || 'unknown'
-  };
+  try {
+    const response = await apiClient.post<InfobipResponse>('/sms/3/messages', payload);
+
+    return {
+      messageId: response.data.messages?.[0]?.messageId || 'unknown',
+      status: response.data.messages?.[0]?.status?.name || 'unknown'
+    };
+  } catch (error) {
+    // Handle Axios errors with detailed logging
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as any;  // Type assertion needed due to axios types
+      const statusCode = axiosError.response?.status;
+      const responseData = axiosError.response?.data;
+      const requestUrl = axiosError.config?.url;
+
+      logger.error('Infobip API call failed', {
+        error: axiosError.message,
+        statusCode,
+        responseData,
+        requestUrl,
+        payload,
+        phoneNumber: formattedNumber,
+        sender: actualSenderId,
+        apiKey: INFOBIP_API_KEY ? 'Set' : 'Not set'
+      });
+    } else {
+      // Handle non-Axios errors
+      logger.error('Infobip API call failed with non-HTTP error', {
+        error: error instanceof Error ? error.message : String(error),
+        phoneNumber: formattedNumber,
+        sender: actualSenderId
+      });
+    }
+
+    // Re-throw the error to be handled by the circuit breaker
+    throw error;
+  }
 }
 
 const infobipBreaker = createCircuitBreaker(
-  (phoneNumber, text, senderId) => callInfobipApi(phoneNumber, text, senderId),
+  (phoneNumber: string, text: string, senderId?: string) => callInfobipApi(phoneNumber, text, senderId),
   'infobip-api'
 );
 

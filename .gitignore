@@ -1,2 +1,9 @@
 /.env
 /node_modules
+/client.properties
+/dist
+/coverage
+/logs
+/tsconfig.tsbuildinfo
+/tsconfig.tsbuildinfo.json
+/tsconfig.tsbuildinfo.json.map
