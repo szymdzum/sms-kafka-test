@@ -1,6 +1,6 @@
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import * as dotenv from 'dotenv';
-import logger from './logger';
+import logger from '../logger';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -88,3 +88,30 @@ function formatPhoneNumber(phoneNumber: string): string {
 
   return cleaned;
 }
+
+
+/**
+  const infobipBreaker = createCircuitBreaker(
+  (phoneNumber: string, text: string, senderId?: string) => callInfobipApi(phoneNumber, text, senderId),
+  'infobip-api'
+);
+
+
+export async function sendSms(phoneNumber: string, text: string, senderId?: string) {
+  try {
+    return await retryWithBackoff(
+      () => infobipBreaker.fire(phoneNumber, text, senderId),
+      {
+        maxRetries: 3,
+        initialDelay: 1000
+      }
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Failed to send SMS', { error: error.message });
+    }
+    throw error;
+  }
+}
+
+*/

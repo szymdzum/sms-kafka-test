@@ -44,7 +44,6 @@
     /* Additional Checks */
     "allowUnreachableCode": false,                    /* Report errors on unreachable code */
     "allowUnusedLabels": false,                       /* Report errors on unused labels */
-    "exactOptionalPropertyTypes": true,               /* Interpret optional property types as written */
     "noImplicitOverride": true,                       /* Ensure overriding members are marked with an override modifier */
 
     /* Module Resolution */

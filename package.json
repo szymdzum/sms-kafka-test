@@ -8,10 +8,9 @@
         "build": "tsc",
         "start": "node dist/index.js",
         "dev": "node --import tsx src/index.ts",
-        "test-sms": "node --import tsx src/test-sms.ts",
-        "test-sms-producer": "node --import tsx src/test-sms-producer.ts",
         "send": "npx tsx src/infobipSDK.ts",
-        "ts-node": "npx tsx"
+        "ts-node": "npx tsx",
+        "test-soap": "npx tsx src/test-soap.ts"
     },
     "engines": {
         "node": ">=18.0.0 <23.0.0"
