@@ -8,7 +8,9 @@
     "module": "CommonJS",                           /* Use CommonJS for Node.js compatibility */
     "moduleResolution": "node",                     /* Use node resolution strategy which doesn't require extensions */
     "baseUrl": "./",                                  /* Base directory to resolve non-relative module names */
-    "paths": {},                                      /* A series of entries which re-map imports to lookup locations */
+    "paths": {
+      "@infobip-api/sdk": ["node_modules/@infobip-api/sdk"]
+    },                                      /* A series of entries which re-map imports to lookup locations */
     "rootDir": "./src",                               /* Specify the root directory of input files */
     "outDir": "./dist",                               /* Redirect output structure to the directory */
 
@@ -54,14 +56,14 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
-    "esm": false,
+    "esm": true,
     "experimentalSpecifierResolution": "node",
     "transpileOnly": true,
     "compilerOptions": {
-      "module": "CommonJS"
+      "module": "ESNext"
     },
     "moduleTypes": {
-      "**/*.ts": "cjs"
+      "**/*.ts": "esm"
     },
     "files": true,
     "preferTsExts": true
