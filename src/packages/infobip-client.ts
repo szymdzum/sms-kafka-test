@@ -62,11 +62,11 @@ const sendSmsSDK = async (phoneNumber: string, message: string, senderId?: strin
     const response = await infobip.channels.sms.send(messagePayload);
     const { data } = response;
 
-    logger.info(JSON.stringify(data));
-    return data;
+     logger.info('SMS sent successfully', { data });
+     return data;
   } catch (error) {
-    console.error(error);
-    throw error;
+     logger.error('Failed to send SMS', { error });
+     throw error;
   }
 };
 
