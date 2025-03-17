@@ -167,16 +167,17 @@ export async function testInfobipSms(dryRun: boolean = true): Promise<void> {
     console.log(smsBatch[0]);
 
     if (!dryRun) {
-      // Import the sendSms function from infobip-client
-      const infobipClient = await import('../packages/infobip-client.js');
+      // Import the sendSms and sendBulkSms functions from the new infobip package
+      const { sendSms, sendBulkSms } = await import('../../packages/infobip/index.js');
 
+      // Option 1: Send messages one by one
       for (const sms of smsBatch) {
         // console.log(`\n-------------------------------------------------------------`);
         // console.log(`Sending to ${sms.phoneNumber}: "${sms.message}" (Sender: ${sms.senderId})`);
 
         try {
           // Only send if not in dry run mode
-          const result = await infobipClient.sendSms(sms.phoneNumber, sms.message, sms.senderId);
+          const result = await sendSms(sms.phoneNumber, sms.message, sms.senderId);
           // Use util.inspect to properly display nested objects with colors
           console.log('SMS sent successfully:');
           console.log(util.inspect(result, { depth: null, colors: true }));
@@ -186,7 +187,6 @@ export async function testInfobipSms(dryRun: boolean = true): Promise<void> {
           console.error(util.inspect(error, { depth: null, colors: true }));
           console.log(`-------------------------------------------------------------`);
         }
-
       }
     } else {
       console.log('\nDRY RUN MODE: No messages were actually sent');

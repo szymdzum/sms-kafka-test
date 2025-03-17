@@ -11,7 +11,10 @@
         "ts-node": "npx tsx",
         "soap-test": "npx tsx src/tests/soap-test.ts",
         "soap-batch": "npx tsx src/tests/soap-batch-test.ts",
-        "infobip-test": "npx tsx src/packages/infobip-client.ts"
+        "infobip-test": "npx tsx src/tests/infobip/infobip-batch-test.ts",
+        "infobip-demo": "npx tsx src/tests/infobip/infobip-demo.ts",
+        "send-sms": "npx tsx src/tests/infobip/send-test-sms.ts",
+        "send-bulk-sms": "npx tsx src/tests/infobip/send-bulk-sms.ts"
     },
     "engines": {
         "node": ">=18.0.0 <23.0.0"
