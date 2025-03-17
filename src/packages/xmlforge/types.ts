@@ -55,6 +55,8 @@ export interface OrderItem {
   unitPrice: number;
   /** Total price for this item (quantity * unitPrice) */
   totalPrice: number;
+  /** Item price */
+  price: number;
 }
 
 /**

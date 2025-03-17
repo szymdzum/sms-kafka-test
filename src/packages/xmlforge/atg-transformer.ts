@@ -5,9 +5,15 @@
  */
 import { parseStringPromise } from 'xml2js';
 import logger from '../../logger.js';
-import { Order, OrderStatus, ShippingMethod, Customer, OrderItem } from './types.js';
+import { Order, OrderStatus, ShippingMethod } from './types.js';
 import { transformXmlToJson } from './transformer.js';
 import getXmlForgeConfig from './config.js';
+import {
+  isAtgSoapXml,
+  extractTextFromNode,
+  extractPattern,
+  PATTERNS
+} from './utils.js';
 
 /**
  * Extract the brand information from ATG SOAP XML
@@ -24,7 +30,7 @@ function extractBrand(xmlData: any): string {
 
     // Get brand name or code (name attribute or text content)
     const brandName = brandElement?.$?.name;
-    const brandCode = brandElement?._ || brandElement?.[0];
+    const brandCode = extractTextFromNode(brandElement);
 
     return brandName || brandCode || 'Unknown';
   } catch (error) {
@@ -42,12 +48,12 @@ function extractBrand(xmlData: any): string {
 function extractPhoneNumber(xmlData: any): string {
   try {
     // Navigate through the SOAP structure to find the phone number
-    const phoneNumber = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
+    const phoneNode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
       ?.ProcessCommunication?.[0]?.DataArea?.[0]?.Communication?.[0]
       ?.CommunicationHeader?.[0]?.CustomerParty?.[0]?.Contact?.[0]
-      ?.SMSTelephoneCommunication?.[0]?.['oa:FormattedNumber']?.[0]?.trim();
+      ?.SMSTelephoneCommunication?.[0]?.['oa:FormattedNumber']?.[0];
 
-    return phoneNumber || '';
+    return extractTextFromNode(phoneNode);
   } catch (error) {
     logger.warn('Could not extract phone number from SOAP XML', { error });
     return '';
@@ -63,11 +69,11 @@ function extractPhoneNumber(xmlData: any): string {
 function extractMessage(xmlData: any): string {
   try {
     // Navigate through the SOAP structure to find the message content
-    const message = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
+    const messageNode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
       ?.ProcessCommunication?.[0]?.DataArea?.[0]?.Communication?.[0]
       ?.CommunicationItem?.[0]?.['oa:Message']?.[0]?.['oa:Note']?.[0];
 
-    return message || '';
+    return extractTextFromNode(messageNode);
   } catch (error) {
     logger.warn('Could not extract message from SOAP XML', { error });
     return '';
@@ -83,19 +89,19 @@ function extractMessage(xmlData: any): string {
 function extractOrderId(xmlData: any): string {
   try {
     // Try to get the BODID from ApplicationArea
-    const bodId = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
+    const bodIdNode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
       ?.ProcessCommunication?.[0]?.['oa:ApplicationArea']?.[0]?.['oa:BODID']?.[0];
 
-    if (bodId) {
-      return bodId;
+    if (bodIdNode) {
+      return extractTextFromNode(bodIdNode);
     }
 
     // Fallback to ActionExpression code
-    const actionCode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
+    const actionCodeNode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
       ?.ProcessCommunication?.[0]?.DataArea?.[0]?.['oa:Process']?.[0]
-      ?.['oa:ActionCriteria']?.[0]?.['oa:ActionExpression']?.[0]?._;
+      ?.['oa:ActionCriteria']?.[0]?.['oa:ActionExpression']?.[0];
 
-    return actionCode || 'Unknown-ID';
+    return extractTextFromNode(actionCodeNode) || 'Unknown-ID';
   } catch (error) {
     logger.warn('Could not extract order ID from SOAP XML', { error });
     return 'Unknown-ID';
@@ -111,10 +117,10 @@ function extractOrderId(xmlData: any): string {
 function extractCreationDate(xmlData: any): string {
   try {
     // Get creation date from ApplicationArea
-    const date = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
+    const dateNode = xmlData?.['SOAP-ENV:Envelope']?.['SOAP-ENV:Body']?.[0]
       ?.ProcessCommunication?.[0]?.['oa:ApplicationArea']?.[0]?.['oa:CreationDateTime']?.[0];
 
-    return date || new Date().toISOString();
+    return extractTextFromNode(dateNode) || new Date().toISOString();
   } catch (error) {
     logger.warn('Could not extract creation date from SOAP XML', { error });
     return new Date().toISOString();
@@ -136,7 +142,7 @@ function extractChannel(xmlData: any): string {
 
     // Get channel name or code (name attribute or text content)
     const channelName = channelElement?.$?.name;
-    const channelCode = channelElement?._ || channelElement?.[0];
+    const channelCode = extractTextFromNode(channelElement);
 
     return channelName || channelCode || '';
   } catch (error) {
@@ -175,10 +181,7 @@ export async function transformAtgSoapXml(soapXml: string): Promise<Order> {
     // Extract order number from message if possible
     let orderNumber = orderId;
     if (message) {
-      const orderNumberMatch = message.match(/order\s+([A-Z0-9]+)/i);
-      if (orderNumberMatch && orderNumberMatch[1]) {
-        orderNumber = orderNumberMatch[1];
-      }
+      orderNumber = extractPattern(message, PATTERNS.ORDER_NUMBER, orderId);
     }
 
     // Create a simplified Order object
@@ -220,18 +223,12 @@ export async function transformAtgSoapXml(soapXml: string): Promise<Order> {
       order.shippingMethod = ShippingMethod.CLICK_AND_COLLECT;
 
       // Try to extract store name from message
-      const storeMatch = message.match(/from\s+([^\.]+)/i);
-      if (storeMatch && storeMatch[1]) {
-        order.collectionStore = storeMatch[1].trim();
-      }
+      order.collectionStore = extractPattern(message, PATTERNS.STORE_LOCATION);
     }
 
     // Try to extract delivery date if mentioned in message
     if (message) {
-      const deliveryMatch = message.match(/delivery:?\s+([^\.]+)/i);
-      if (deliveryMatch && deliveryMatch[1]) {
-        order.estimatedDeliveryDate = deliveryMatch[1].trim();
-      }
+      order.estimatedDeliveryDate = extractPattern(message, PATTERNS.DELIVERY_DATE);
     }
 
     logger.info('Transformed ATG SOAP XML to Order object', {
@@ -247,14 +244,58 @@ export async function transformAtgSoapXml(soapXml: string): Promise<Order> {
   }
 }
 
-/**
- * Detect if the XML is an ATG SOAP message
- *
- * @param xml - XML string to check
- * @returns True if it's an ATG SOAP message
- */
-export function isAtgSoapXml(xml: string): boolean {
-  return xml.includes('ProcessCommunication') &&
-         xml.includes('SOAP-ENV:Envelope') &&
-         xml.includes('SOAP-ENV:Body');
+// Create a stateful transformer factory
+class OrderTransformerFactory {
+  private static instance: OrderTransformerFactory;
+  private orderCache: Map<string, Order> = new Map();
+
+  // Use singleton pattern
+  static getInstance() {
+    if (!OrderTransformerFactory.instance) {
+      OrderTransformerFactory.instance = new OrderTransformerFactory();
+    }
+    return OrderTransformerFactory.instance;
+  }
+
+  // Get appropriate transformer while maintaining state
+  getTransformer(xml: string) {
+    return isAtgSoapXml(xml)
+      ? this.createAtgTransformer()
+      : this.createStandardTransformer();
+  }
+
+  // Create ATG SOAP transformer function
+  private createAtgTransformer() {
+    return async (xml: string): Promise<Order> => {
+      const order = await transformAtgSoapXml(xml);
+      this.cacheOrder(order);
+      return order;
+    };
+  }
+
+  // Create standard XML transformer function
+  private createStandardTransformer() {
+    return async (xml: string): Promise<Order> => {
+      // Import dynamically to prevent circular dependency
+      const { transformOrderXml } = await import('./transformer.js');
+      const order = await transformOrderXml(xml);
+      this.cacheOrder(order);
+      return order;
+    };
+  }
+
+  // Cache orders by ID
+  cacheOrder(order: Order) {
+    this.orderCache.set(order.id, order);
+  }
+
+  // Get cached order
+  getCachedOrder(orderId: string): Order | undefined {
+    return this.orderCache.get(orderId);
+  }
+
+  // Other shared functionality...
 }
+
+// Export the factory singleton
+export const orderTransformerFactory = OrderTransformerFactory.getInstance();

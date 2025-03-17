@@ -7,7 +7,8 @@ import { Order } from './types.js';
 import { transformOrderXml } from './transformer.js';
 import { generateOrderSms } from './template.js';
 import getXmlForgeConfig from './config.js';
-import { transformAtgSoapXml, isAtgSoapXml } from './atg-transformer.js';
+import { transformAtgSoapXml } from './atg-transformer.js';
+import { isAtgSoapXml } from './utils.js';
 
 /**
  * Process an XML order and send SMS notification if needed

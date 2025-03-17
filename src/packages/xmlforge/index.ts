@@ -21,7 +21,7 @@ export {
 // Export ATG SOAP transformer
 export {
   transformAtgSoapXml,
-  isAtgSoapXml
+  orderTransformerFactory
 } from './atg-transformer.js';
 
 // Export template functions
@@ -37,6 +37,16 @@ export {
   processOrderAndSendSms,
   processBatchOrders
 } from './handler.js';
+
+// Export utility functions
+export {
+  toCamelCase,
+  removeEmptyValues,
+  extractTextFromNode,
+  extractPattern,
+  PATTERNS,
+  isAtgSoapXml
+} from './utils.js';
 
 // Default export for convenience
 import { processOrderAndSendSms } from './handler.js';
