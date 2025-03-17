@@ -1,5 +1,5 @@
-import { generateSoapXml, generateSampleBatch } from './soap-test-generator';
-import { soapXmlToJson } from '../packages/soap-convertion';
+import { generateSoapXml, generateSampleBatch } from './soap-batch-test.js';
+import { soapXmlToJson } from '../packages/soap-convertion.js';
 // Import commented out to avoid dependency issues in test
 // import { sendSmsSDK } from './infobipSDK';
 
@@ -50,21 +50,61 @@ async function testSoapToSms() {
 
     // 5. Process the batch
     console.log('\n5. Processing the batch...');
+
+    // Statistics for batch summary
+    const stats = {
+      total: batch.length,
+      success: 0,
+      failed: 0,
+      brandDistribution: {} as Record<string, number>,
+      channelDistribution: {} as Record<string, number>
+    };
+
     for (let i = 0; i < batch.length; i++) {
       console.log(`\nProcessing sample ${i + 1}:`);
       const sampleXml = batch[i];
       if (sampleXml) {
         const details = await soapXmlToJson(sampleXml);
         if (details) {
+          stats.success++;
+
+          // Update brand distribution
+          const brandKey = `${details.brandCode} (${details.brandName || 'Unknown'})`;
+          stats.brandDistribution[brandKey] = (stats.brandDistribution[brandKey] || 0) + 1;
+
+          // Update channel distribution
+          const channelKey = `${details.channelCode} (${details.channelName || 'Unknown'})`;
+          stats.channelDistribution[channelKey] = (stats.channelDistribution[channelKey] || 0) + 1;
+
           console.log(`- Phone: ${details.phoneNumber}`);
           console.log(`- Message: ${details.message}`);
           console.log(`- Brand: ${details.brandCode} (${details.brandName || 'Unknown'})`);
           console.log(`- Channel: ${details.channelCode} (${details.channelName || 'Unknown'})`);
         } else {
           console.error(`Failed to parse sample ${i + 1}`);
+          stats.failed++;
         }
       }
     }
+
+    // 6. Print batch summary
+    console.log('\n6. Batch Processing Summary:');
+    console.log('===========================');
+    console.log(`Total messages processed: ${stats.total}`);
+    console.log(`Successfully parsed: ${stats.success} (${Math.round(stats.success/stats.total*100)}%)`);
+    if (stats.failed > 0) {
+      console.log(`Failed to parse: ${stats.failed} (${Math.round(stats.failed/stats.total*100)}%)`);
+    }
+
+    console.log('\nBrand Distribution:');
+    Object.entries(stats.brandDistribution).forEach(([brand, count]) => {
+      console.log(`- ${brand}: ${count} (${Math.round(count/stats.success*100)}%)`);
+    });
+
+    console.log('\nChannel Distribution:');
+    Object.entries(stats.channelDistribution).forEach(([channel, count]) => {
+      console.log(`- ${channel}: ${count} (${Math.round(count/stats.success*100)}%)`);
+    });
 
     console.log('\nTest completed successfully!');
   } catch (error) {

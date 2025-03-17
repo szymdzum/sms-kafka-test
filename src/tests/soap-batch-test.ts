@@ -1,4 +1,4 @@
-import { SmsDetails } from '../packages/soap-convertion';
+import { SmsDetails } from '../packages/soap-convertion.js';
 
 /**
  * Generates a sample SOAP XML message for testing
@@ -12,7 +12,7 @@ export function generateSoapXml(customDetails?: Partial<SmsDetails>): string {
     message: 'Your order 00123731 has been placed, thank you for using TradePoint.co.uk',
     bodId: '00000016616867',
     brandCode: 'TP',
-    brandName: 'Trade Point',
+    brandName: 'TradePoint',
     channelCode: 'WEB',
     channelName: 'Web',
     actionCode: 'SMS',
@@ -32,7 +32,9 @@ export function generateSoapXml(customDetails?: Partial<SmsDetails>): string {
 <DataArea>
 <oa:Process>
 <oa:ActionCriteria>
-<oa:ActionExpression expressionLanguage="text" actionCode="Add ">${details.actionCode || 'SMS'}</oa:ActionExpression>
+<oa:ActionExpression expressionLanguage="text" actionCode="Add ">
+  ${details.actionCode || 'SMS'}
+</oa:ActionExpression>
 </oa:ActionCriteria>
 </oa:Process>
 <Communication>
@@ -40,16 +42,22 @@ export function generateSoapXml(customDetails?: Partial<SmsDetails>): string {
 <CustomerParty>
 <Contact>
 <SMSTelephoneCommunication>
-<oa:FormattedNumber>${details.phoneNumber}</oa:FormattedNumber>
+<oa:FormattedNumber>
+  ${details.phoneNumber}
+</oa:FormattedNumber>
 </SMSTelephoneCommunication>
 </Contact>
 </CustomerParty>
 <BrandChannel>
 <Brand>
-<oa:Code name="${details.brandName || details.brandCode}">${details.brandCode}</oa:Code>
+<oa:Code name="${details.brandName || details.brandCode}">
+  ${details.brandCode}
+</oa:Code>
 </Brand>
 <Channel>
-<oa:Code name="${details.channelName || details.channelCode}">${details.channelCode}</oa:Code>
+<oa:Code name="${details.channelName || details.channelCode}">
+  ${details.channelCode}
+</oa:Code>
 </Channel>
 </BrandChannel>
 </CommunicationHeader>
@@ -77,8 +85,8 @@ export function generateSampleBatch(count: number = 5): string[] {
   for (let i = 0; i < count; i++) {
     const orderNum = String(100000 + i).padStart(8, '0');
     const bodId = String(10000000 + i).padStart(14, '0');
-    const channelOptions = ['WEB', 'MOB', 'CCC', 'STR'] as const;
-    const channelNameOptions = ['Web', 'Mobile', 'Customer Contact Centre', 'Store'] as const;
+    const channelOptions = ['WEB', 'MOB', 'STR'] as const;
+    const channelNameOptions = ['Web', 'Mobile', 'Store'] as const;
     const channelIndex = i % channelOptions.length;
 
     // Ensure we have valid values
@@ -90,7 +98,7 @@ export function generateSampleBatch(count: number = 5): string[] {
       message: `Your order ${orderNum} has been placed, thank you for your purchase.`,
       bodId,
       brandCode: i % 2 === 0 ? 'TP' : 'BQ',
-      brandName: i % 2 === 0 ? 'Trade Point' : 'B and Q',
+      brandName: i % 2 === 0 ? 'Trade Point' : 'B&Q',
       channelCode,
       channelName
     }));
@@ -104,7 +112,7 @@ export function generateSampleBatch(count: number = 5): string[] {
  */
 export async function testSoapGeneration(): Promise<void> {
   // Import the parser to test the generated XML
-  const { soapXmlToJson, testSoapParsing } = await import('../packages/soap-convertion');
+  const { soapXmlToJson, testSoapParsing } = await import('../packages/soap-convertion.js');
 
   console.log('Generating sample SOAP message...');
   const sampleXml = generateSoapXml({
@@ -120,7 +128,7 @@ export async function testSoapGeneration(): Promise<void> {
   const parsedDetails = await soapXmlToJson(sampleXml);
   console.log('Parsed result:', parsedDetails);
 
-  console.log('\nGenerating a batch of 3 samples:');
+  console.log('\nGenerating a batch');
   const batch = generateSampleBatch(3);
   console.log(`Generated ${batch.length} samples`);
 
@@ -133,3 +141,5 @@ export async function testSoapGeneration(): Promise<void> {
     }
   }
 }
+
+testSoapGeneration();

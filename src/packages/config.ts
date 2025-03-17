@@ -23,9 +23,9 @@ const config: AppConfig = {
   kafkaBrokers: requiredEnv('KAFKA_BROKERS').split(','),
   kafkaTopic: requiredEnv('KAFKA_TOPIC'),
   kafkaConsumerGroup: process.env.KAFKA_CONSUMER_GROUP || 'sms-consumer-group',
-  infobipBaseUrl: process.env.INFOBIP_BASE_URL || 'https://api.infobip.com',
+  infobipBaseUrl: requiredEnv('INFOBIP_BASE_URL') ,
   infobipApiKey: requiredEnv('INFOBIP_API_KEY'),
-  infobipFrom: process.env.INFOBIP_FROM || 'InfoSMS',  // default sender
+  infobipFrom: requiredEnv('INFOBIP_FROM'),
   environment: process.env.NODE_ENV || 'development'
 };
 

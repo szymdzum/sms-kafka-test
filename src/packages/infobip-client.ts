@@ -1,6 +1,6 @@
 import { Infobip, AuthType } from '@infobip-api/sdk';
 import * as dotenv from 'dotenv';
-import logger from '../logger';
+import logger from '../logger.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -42,7 +42,8 @@ const infobip = new Infobip({
   authType: AuthType.ApiKey,
 });
 
-const sendSmsSDK = async (phoneNumber: string, message: string, senderId?: string) => {
+// Export the function so it can be imported by other modules
+export const sendSms = async (phoneNumber: string, message: string, senderId?: string) => {
 
   logger.info(`Sending SMS to ${phoneNumber} with message ${message}`);
 
@@ -58,8 +59,10 @@ const sendSmsSDK = async (phoneNumber: string, message: string, senderId?: strin
     }],
   };
 
+  const smsChannel = infobip.channels.sms;
+
   try {
-    const response = await infobip.channels.sms.send(messagePayload);
+    const response = await smsChannel.send(messagePayload);
     const { data } = response;
 
      logger.info('SMS sent successfully', { data });
@@ -70,7 +73,8 @@ const sendSmsSDK = async (phoneNumber: string, message: string, senderId?: strin
   }
 };
 
-sendSmsSDK('48889403808', 'Siema Elo Wariatku');
+// This was just a test call - let's comment it out as we're moving to a proper test module
+// sendSms('48889403808', 'Siema Elo Wariatku');
 
 function formatPhoneNumber(phoneNumber: string): string {
   // Remove any non-digit characters
@@ -89,6 +93,8 @@ function formatPhoneNumber(phoneNumber: string): string {
   return cleaned;
 }
 
+// Also export the phone formatter function for potential reuse
+export { formatPhoneNumber };
 
 /**
   const infobipBreaker = createCircuitBreaker(

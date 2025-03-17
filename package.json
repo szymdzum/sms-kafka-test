@@ -8,9 +8,10 @@
         "build": "tsc",
         "start": "node dist/index.js",
         "dev": "node --import tsx src/index.ts",
-        "send": "npx tsx src/infobipSDK.ts",
         "ts-node": "npx tsx",
-        "test-soap": "npx tsx src/test-soap.ts"
+        "soap-test": "npx tsx src/tests/soap-test.ts",
+        "soap-batch": "npx tsx src/tests/soap-batch-test.ts",
+        "infobip-test": "npx tsx src/packages/infobip-client.ts"
     },
     "engines": {
         "node": ">=18.0.0 <23.0.0"
