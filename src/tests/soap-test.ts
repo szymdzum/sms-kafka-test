@@ -1,5 +1,5 @@
 import { generateSoapXml, generateSampleBatch } from './soap-batch-test.js';
-import { soapXmlToJson } from '../packages/soap-convertion.js';
+import { transformAtgSoapXml } from '../packages/xmlforge/atg-transformer.js';
 // Import commented out to avoid dependency issues in test
 // import { sendSmsSDK } from './infobipSDK';
 
@@ -23,7 +23,7 @@ async function testSoapToSms() {
 
     // 2. Parse the SOAP message
     console.log('\n2. Parsing the SOAP message...');
-    const smsDetails = await soapXmlToJson(sampleXml);
+    const smsDetails = await transformAtgSoapXml(sampleXml);
 
     if (!smsDetails) {
       throw new Error('Failed to parse SOAP message');
@@ -31,11 +31,11 @@ async function testSoapToSms() {
 
     console.log('Extracted SMS details:');
     console.log({
-      bodId: smsDetails.bodId,
-      phoneNumber: smsDetails.phoneNumber,
-      message: smsDetails.message,
-      brand: smsDetails.brandCode,
-      channel: smsDetails.channelCode
+      bodId: smsDetails.id,
+      phoneNumber: smsDetails.customer.phoneNumber,
+      message: smsDetails.items?.[0]?.name || 'No message',
+      brand: smsDetails.brand,
+      channel: smsDetails.shippingMethod // Use shippingMethod as channel
     });
 
     // 3. Send SMS (commented out to avoid actual sending)
@@ -64,22 +64,22 @@ async function testSoapToSms() {
       console.log(`\nProcessing sample ${i + 1}:`);
       const sampleXml = batch[i];
       if (sampleXml) {
-        const details = await soapXmlToJson(sampleXml);
+        const details = await transformAtgSoapXml(sampleXml);
         if (details) {
           stats.success++;
 
           // Update brand distribution
-          const brandKey = `${details.brandCode} (${details.brandName || 'Unknown'})`;
+          const brandKey = `${details.brand} (${details.brand || 'Unknown'})`;
           stats.brandDistribution[brandKey] = (stats.brandDistribution[brandKey] || 0) + 1;
 
           // Update channel distribution
-          const channelKey = `${details.channelCode} (${details.channelName || 'Unknown'})`;
+          const channelKey = `${details.shippingMethod} (${details.shippingMethod || 'Unknown'})`;
           stats.channelDistribution[channelKey] = (stats.channelDistribution[channelKey] || 0) + 1;
 
-          console.log(`- Phone: ${details.phoneNumber}`);
-          console.log(`- Message: ${details.message}`);
-          console.log(`- Brand: ${details.brandCode} (${details.brandName || 'Unknown'})`);
-          console.log(`- Channel: ${details.channelCode} (${details.channelName || 'Unknown'})`);
+          console.log(`- Phone: ${details.customer.phoneNumber}`);
+          console.log(`- Message: ${details.items?.[0]?.name || 'No message'}`);
+          console.log(`- Brand: ${details.brand} (${details.brand || 'Unknown'})`);
+          console.log(`- Channel: ${details.shippingMethod} (${details.shippingMethod || 'Unknown'})`);
         } else {
           console.error(`Failed to parse sample ${i + 1}`);
           stats.failed++;
