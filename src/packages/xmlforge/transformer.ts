@@ -4,7 +4,6 @@
 import { parseStringPromise } from 'xml2js';
 import logger from '../../logger.js';
 import { Order, OrderStatus, ShippingMethod, OrderItem } from './types.js';
-import getXmlForgeConfig from './config.js';
 import { toCamelCase, removeEmptyValues } from './utils.js';
 
 /**
