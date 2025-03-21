@@ -1,53 +1,15 @@
 /**
- * XmlForge - XML to JSON transformation and SMS notification package
+ * XmlForge - XML to SMS data transformer
  *
- * This package provides tools for converting XML order data to JSON,
- * extracting relevant information, and sending SMS notifications.
+ * This package provides tools for extracting SMS data from ATG SOAP XML messages.
  */
 
 // Export types
 export * from './types.js';
 
-// Export configuration
-export { getXmlForgeConfig, SMS_TEMPLATES } from './config.js';
-
-// Export transformer functions
-export {
-  transformXmlToJson,
-  transformOrderXml,
-  extractSmsFields
-} from './transformer.js';
-
-// Export ATG SOAP transformer
-export {
-  transformAtgSoapXml,
-  orderTransformerFactory
-} from './atg-transformer.js';
-
-// Export template functions
-export {
-  fillTemplate,
-  validateTemplateData,
-  getOrderTemplate,
-  generateOrderSms
-} from './template.js';
-
-// Export handlers
-export {
-  processOrderAndSendSms,
-  processBatchOrders
-} from './handler.js';
-
-// Export utility functions
-export {
-  toCamelCase,
-  removeEmptyValues,
-  extractTextFromNode,
-  extractPattern,
-  PATTERNS,
-  isAtgSoapXml
-} from './utils.js';
+// Export transformer function
+export { transformXmlToSmsData } from './transformer.js';
 
 // Default export for convenience
-import { processOrderAndSendSms } from './handler.js';
-export default processOrderAndSendSms;
+import { transformXmlToSmsData } from './transformer.js';
+export default transformXmlToSmsData;
