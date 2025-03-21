@@ -15,8 +15,7 @@
         "infobip-demo": "npx tsx src/tests/infobip/infobip-demo.ts",
         "send-sms": "npx tsx src/tests/infobip/send-test-sms.ts",
         "send-bulk-sms": "npx tsx src/tests/infobip/send-bulk-sms.ts",
-        "xmlforge-demo": "npx tsx src/tests/infobip/xmlforge-demo.ts",
-        "atg-soap-demo": "npx tsx src/tests/infobip/atg-soap-demo.ts"
+        "xmlforge-demo": "npx tsx src/tests/infobip/xmlforge-demo.ts"
     },
     "engines": {
         "node": ">=18.0.0 <23.0.0"

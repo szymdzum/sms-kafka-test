@@ -1,4 +1,45 @@
-import { SmsDetails } from '../packages/soap-convertion.js';
+import { transformAtgSoapXml } from '../packages/xmlforge/atg-transformer.js';
+
+/**
+ * SMS Details for SOAP XML generation
+ */
+interface SmsDetails {
+  phoneNumber: string;
+  message: string;
+  bodId: string;
+  brandCode: string;
+  brandName: string;
+  channelCode: string;
+  channelName: string;
+  actionCode: string;
+  creationDateTime: string;
+}
+
+/**
+ * Helper function to parse SOAP XML to JSON
+ */
+async function soapXmlToJson(soapXml: string) {
+  try {
+    return await transformAtgSoapXml(soapXml);
+  } catch (error) {
+    console.error('Error parsing SOAP XML:', error);
+    return null;
+  }
+}
+
+/**
+ * Test function to parse SOAP XML
+ */
+async function testSoapParsing(soapXml: string) {
+  try {
+    const result = await soapXmlToJson(soapXml);
+    console.log('Parsed SOAP result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error testing SOAP parsing:', error);
+    return null;
+  }
+}
 
 /**
  * Generates a sample SOAP XML message for testing
@@ -111,9 +152,7 @@ export function generateSampleBatch(count: number = 5): string[] {
  * Test function to demonstrate SOAP generation and parsing
  */
 export async function testSoapGeneration(): Promise<void> {
-  // Import the parser to test the generated XML
-  const { soapXmlToJson, testSoapParsing } = await import('../packages/soap-convertion.js');
-
+  // Use the functions defined in this file
   console.log('Generating sample SOAP message...');
   const sampleXml = generateSoapXml({
     phoneNumber: '+447700900123',

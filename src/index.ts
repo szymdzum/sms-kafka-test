@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { consume } from "./consumer";
+import { consume } from "./consumer.js";
 
 export function readConfig(fileName: string): Record<string, string> {
     const data = fs.readFileSync(fileName, "utf8").toString().split("\n");

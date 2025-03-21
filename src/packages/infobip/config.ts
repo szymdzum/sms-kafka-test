@@ -16,26 +16,47 @@ export interface InfobipConfig {
   defaultSender: string;
 }
 
-// Read configuration from environment variables
-const INFOBIP_URL = process.env.INFOBIP_BASE_URL;
-const INFOBIP_KEY = process.env.INFOBIP_API_KEY;
-const DEFAULT_SENDER = process.env.INFOBIP_DEFAULT_SENDER || 'KingFisher';
+/**
+ * Environment-specific configuration
+ */
+const environments = {
+  development: {
+    baseUrl: process.env.INFOBIP_DEV_BASE_URL,
+    apiKey: process.env.INFOBIP_DEV_API_KEY,
+    defaultSender: process.env.INFOBIP_DEV_DEFAULT_SENDER || 'KingFisher-Dev'
+  },
+  test: {
+    baseUrl: process.env.INFOBIP_TEST_BASE_URL,
+    apiKey: process.env.INFOBIP_TEST_API_KEY,
+    defaultSender: process.env.INFOBIP_TEST_DEFAULT_SENDER || 'KingFisher-Test'
+  },
+  production: {
+    baseUrl: process.env.INFOBIP_PROD_BASE_URL,
+    apiKey: process.env.INFOBIP_PROD_API_KEY,
+    defaultSender: process.env.INFOBIP_PROD_DEFAULT_SENDER || 'KingFisher'
+  }
+};
 
-// Validate required configuration
-if (!INFOBIP_URL || !INFOBIP_KEY) {
-  const error = 'Missing required environment variables: INFOBIP_BASE_URL or INFOBIP_API_KEY';
-  logger.error(error);
-  throw new Error(error);
-}
+// Get current environment from NODE_ENV or default to development
+const currentEnv = (process.env.NODE_ENV || 'development') as keyof typeof environments;
 
 /**
- * Get the Infobip configuration from environment variables
+ * Get the Infobip configuration for the current environment
  */
 export const getInfobipConfig = (): InfobipConfig => {
+  const envConfig = environments[currentEnv];
+
+  // Validate required configuration
+  if (!envConfig.baseUrl || !envConfig.apiKey) {
+    const error = `Missing required environment variables for ${currentEnv} environment: INFOBIP_${currentEnv.toUpperCase()}_BASE_URL or INFOBIP_${currentEnv.toUpperCase()}_API_KEY`;
+    logger.error(error);
+    throw new Error(error);
+  }
+
   return {
-    baseUrl: INFOBIP_URL,
-    apiKey: INFOBIP_KEY,
-    defaultSender: DEFAULT_SENDER
+    baseUrl: envConfig.baseUrl,
+    apiKey: envConfig.apiKey,
+    defaultSender: envConfig.defaultSender
   };
 };
 
