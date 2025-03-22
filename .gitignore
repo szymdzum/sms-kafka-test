@@ -8,3 +8,9 @@
 /tsconfig.tsbuildinfo.json
 /tsconfig.tsbuildinfo.json.map
 /bin
+
+# macOS system files
+.DS_Store
+src/.DS_Store
+src/packages/.DS_Store
+**/.DS_Store
