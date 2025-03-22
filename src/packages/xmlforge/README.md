@@ -10,6 +10,7 @@ A TypeScript package for extracting SMS data from ATG SOAP XML messages.
 - Type-safe with TypeScript
 - Comprehensive error handling
 - Detailed logging
+- Performance optimization with memoization
 
 ## Installation
 
@@ -103,29 +104,62 @@ Please refer to the provider's documentation for the complete XML specification.
 
 ## API
 
-### `extractSmsData(soapXml: string): Promise<SmsData>`
+### Main Functions
+
+#### `extractSmsData(soapXml: string): Promise<SmsData>`
 
 Extracts SMS data from ATG SOAP XML.
 
-#### Parameters
+**Parameters**
 - `soapXml` (string): The SOAP XML message to parse
 
-#### Returns
-- `Promise<SmsData>`: Object containing:
-  - `phoneNumber` (string): Recipient's phone number
-  - `message` (string): SMS message content
-  - `brand` (string): Brand identifier
-  - `brandName` (string, optional): Human-readable brand name
-  - `channel` (string, optional): Channel code (WEB, MOB, CCC, STR)
-  - `channelName` (string, optional): Human-readable channel name
-  - `orderId` (string, optional): Associated order ID
-  - `creationDateTime` (string, optional): Message creation timestamp
-  - `actionExpression` (string, optional): SMS action type
+**Returns**
+- `Promise<SmsData>`: Object containing extracted SMS data
 
-#### Throws
+**Throws**
 - Error if XML is invalid
 - Error if required fields are missing
 - Error if parsing fails
+
+### Utility Functions
+
+#### `getXmlValue<T>(xml, path, defaultValue, emptyAsUndefined, validator): T`
+
+Type-safe function to extract values from XML using a path.
+
+**Parameters**
+- `xml` (GenericXml): The XML object to extract from
+- `path` (readonly (string | number)[]): Array of path segments to traverse
+- `defaultValue` (T, optional): Default value to return if path not found
+- `emptyAsUndefined` (boolean, optional): Whether to return undefined for empty strings
+- `validator` (ValueValidator<T>, optional): Function to validate the extracted value
+
+#### `getXmlTextValue(xml, path, textProperty): string | undefined`
+
+Extracts text content from XML, handling complex elements with attributes.
+
+**Parameters**
+- `xml` (GenericXml): The XML object to extract from
+- `path` (readonly (string | number)[]): Array of path segments to traverse
+- `textProperty` (string, optional): The property to extract if result is an object (defaults to '_')
+
+#### `clearXmlCache(): void`
+
+Clears the internal memoization cache for XML path resolution. Useful when processing multiple XML documents or when memory usage is a concern.
+
+## Performance Optimization
+
+XmlForge includes built-in performance optimizations:
+
+- **Memoization** of XML path resolution for faster repeated access to the same paths
+- **Efficient traversal** of XML structure with early termination
+- **Smart caching** of intermediate results
+
+For large XML documents or high-throughput applications, consider these additional tips:
+
+- Call `clearXmlCache()` after processing each document to prevent memory leaks
+- Batch process related XML documents to take advantage of the memoization cache
+- Use specific paths rather than broad searches for better performance
 
 ## Types
 
@@ -153,50 +187,44 @@ interface SmsData {
 }
 ```
 
-### `AtgSoapXml`
+### `XmlElement`
 ```typescript
-interface AtgSoapXml {
-  'SOAP-ENV:Envelope': {
-    'SOAP-ENV:Body': [{
-      ProcessCommunication: [{
-        'oa:ApplicationArea': [{
-          'oa:CreationDateTime': [string];
-          'oa:BODID': [string];
-        }];
-        DataArea: [{
-          'oa:Process': [{
-            'oa:ActionCriteria': [{
-              'oa:ActionExpression': [string];
-            }];
-          }];
-          Communication: [{
-            CommunicationHeader: [{
-              CustomerParty: [{
-                Contact: [{
-                  SMSTelephoneCommunication: [{
-                    'oa:FormattedNumber': [string];
-                  }];
-                }];
-              }];
-              BrandChannel: [{
-                Brand: [{
-                  'oa:Code': [{ $: { name: string } } | string];
-                }];
-                Channel: [{
-                  'oa:Code': [{ $: { name: string } } | string];
-                }];
-              }];
-            }];
-            CommunicationItem: [{
-              'oa:Message': [{
-                'oa:Note': [string];
-              }];
-            }];
-          }];
-        }];
-      }];
-    }];
+interface XmlElement<T = string> {
+  _?: T;
+  $?: {
+    name?: string;
+    [key: string]: unknown;
   };
+}
+```
+
+### `GenericXml`
+```typescript
+type GenericXml = {
+  [key: string]: GenericXmlValue;
+};
+
+type GenericXmlValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | GenericXmlArray
+  | GenericXmlObject
+  | XmlAttributes;
+
+type GenericXmlArray = Array<GenericXmlValue>;
+
+type GenericXmlObject = {
+  [key: string]: GenericXmlValue;
+  $?: XmlAttributes;
+  _?: string;
+};
+
+interface XmlAttributes {
+  name?: string;
+  [attr: string]: unknown;
 }
 ```
 

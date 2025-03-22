@@ -40,7 +40,7 @@ export interface XmlForgeConfig {
 /**
  * Type definitions for ATG SOAP XML structure
  */
-export interface AtgSoapXml {
+export interface AtgSoapXml extends GenericXml {
   'SOAP-ENV:Envelope': {
     'SOAP-ENV:Body': [{
       ProcessCommunication: [{
@@ -82,4 +82,63 @@ export interface AtgSoapXml {
       }];
     }];
   };
+  [key: string]: GenericXmlValue; // Required by GenericXml
 }
+
+/**
+ * Type for XML element with potential attributes
+ */
+export interface XmlElement<T = string> {
+  _?: T;
+  $?: {
+    name?: string;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * Generic XML type that can be used for any XML structure
+ */
+export type GenericXml = {
+  [key: string]: GenericXmlValue;
+};
+
+/**
+ * Special XML attributes
+ */
+export interface XmlAttributes {
+  name?: string;
+  [attr: string]: unknown;
+}
+
+/**
+ * Possible values in an XML structure
+ */
+export type GenericXmlValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | GenericXmlArray
+  | GenericXmlObject
+  | XmlAttributes;
+
+/**
+ * Array of XML values
+ */
+export type GenericXmlArray = Array<GenericXmlValue>;
+
+/**
+ * Object containing XML values
+ */
+export type GenericXmlObject = {
+  [key: string]: GenericXmlValue;
+  $?: XmlAttributes;
+  _?: string;
+};
+
+/**
+ * Type for value validators
+ */
+export type ValueValidator<T> = (value: unknown) => value is T;

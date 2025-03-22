@@ -35,7 +35,7 @@ export const XML_PATHS = {
   },
 
   // SMS Destination
-  phone: {
+  phoneNumber: {
     path: [...BASE_PATH, ...COMMUNICATION_PATH, 'CommunicationHeader', 0, 'CustomerParty', 0, 'Contact', 0, 'SMSTelephoneCommunication', 0, 'oa:FormattedNumber', 0] as const,
     type: 'string'
   },
@@ -71,4 +71,10 @@ export const XML_PATHS = {
   }
 } as const;
 
-export type XmlPath = typeof XML_PATHS[keyof typeof XML_PATHS]['path'][number];
+/**
+ * Required fields for SMS data validation
+ */
+export const REQUIRED_FIELDS = ['phoneNumber', 'message', 'brandCode'] as const;
+
+// Allow any string or number for path segments for more flexible usage
+export type XmlPath = string | number;

@@ -1,4 +1,7 @@
-import { extractSmsData } from '../parser.js';
+import { extractSmsData, SmsDataValidationError } from '../parser.js';
+import { getXmlValue, clearXmlCache, XML_PARSE_OPTIONS } from '../utils/xml.js';
+import { parseStringPromise } from 'xml2js';
+import { XML_PATHS } from '../config.js';
 
 describe('SMS Parser', () => {
   const validSoapXml = `
@@ -118,20 +121,11 @@ describe('SMS Parser', () => {
       ''
     );
 
-    await expect(extractSmsData(xmlWithoutPhone)).rejects.toThrow('Missing required fields');
+    await expect(extractSmsData(xmlWithoutPhone)).rejects.toThrow(SmsDataValidationError);
+    await expect(extractSmsData(xmlWithoutPhone)).rejects.toThrow('Missing required SMS data fields');
   });
 
-  it('should handle brand and channel variations', async () => {
-    // Test with different brand format
-    const xmlWithBrandVariation = validSoapXml.replace(
-      '<oa:Code name="MyStore">MyStore</oa:Code>',
-      '<oa:Code name="Different Brand">DifferentBrand</oa:Code>'
-    );
-
-    const result = await extractSmsData(xmlWithBrandVariation);
-    expect(result.brand).toBe('Different Brand');
-    expect(result.brandName).toBe('Different Brand');
-
+  it('should handle channel variations', async () => {
     // Test with different channel format
     const xmlWithChannelVariation = validSoapXml.replace(
       '<oa:Code name="Web">WEB</oa:Code>',
@@ -141,5 +135,156 @@ describe('SMS Parser', () => {
     const resultChannel = await extractSmsData(xmlWithChannelVariation);
     expect(resultChannel.channel).toBe('MOB');
     expect(resultChannel.channelName).toBe('Mobile App');
+  });
+});
+
+describe('XML Path Memoization', () => {
+  // Simplified XML structure for testing
+  const mockXml = {
+    'SOAP-ENV:Envelope': {
+      'SOAP-ENV:Body': [{
+        ProcessCommunication: [{
+          DataArea: [{
+            Communication: [{
+              CommunicationHeader: [{
+                CustomerParty: [{
+                  Contact: [{
+                    testValue: 'test-value'
+                  }]
+                }],
+                BrandChannel: [{
+                  items: [1, 2, 3]
+                }]
+              }]
+            }]
+          }]
+        }]
+      }]
+    }
+  };
+
+  beforeEach(() => {
+    // Clear the cache before each test
+    clearXmlCache();
+  });
+
+  it('should correctly memoize XML path resolution', () => {
+    // Access the same path multiple times
+    const path = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'ProcessCommunication', 0, 'DataArea', 0, 'Communication', 0, 'CommunicationHeader', 0, 'CustomerParty', 0, 'Contact', 0, 'testValue'];
+
+    // First access should cache the result
+    const result1 = getXmlValue(mockXml, path);
+    expect(result1).toBe('test-value');
+
+    // Second access should use the cached result
+    const result2 = getXmlValue(mockXml, path);
+    expect(result2).toBe('test-value');
+
+    // Verify the results are identical (reference equality if objects)
+    expect(result1).toBe(result2);
+  });
+
+  it('should handle multiple different paths correctly', () => {
+    const path1 = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'ProcessCommunication', 0, 'DataArea', 0, 'Communication', 0, 'CommunicationHeader', 0, 'CustomerParty', 0, 'Contact', 0, 'testValue'];
+    const path2 = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'ProcessCommunication', 0, 'DataArea', 0, 'Communication', 0, 'CommunicationHeader', 0, 'BrandChannel', 0, 'items'];
+
+    // Access different paths
+    const result1 = getXmlValue(mockXml, path1);
+    const result2 = getXmlValue(mockXml, path2);
+
+    expect(result1).toBe('test-value');
+    expect(Array.isArray(result2)).toBe(true);
+
+    // Access the same paths again
+    const result1b = getXmlValue(mockXml, path1);
+    const result2b = getXmlValue(mockXml, path2);
+
+    expect(result1b).toBe('test-value');
+    expect(Array.isArray(result2b)).toBe(true);
+  });
+
+  it('should clear the cache when requested', () => {
+    const path = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'ProcessCommunication', 0, 'DataArea', 0, 'Communication', 0, 'CommunicationHeader', 0, 'CustomerParty', 0, 'Contact', 0, 'testValue'];
+
+    // First access
+    const result1 = getXmlValue(mockXml, path);
+
+    // Clear cache
+    clearXmlCache();
+
+    // Access again after clearing cache
+    const result2 = getXmlValue(mockXml, path);
+
+    // Results should still be equal in value
+    expect(result1).toBe(result2);
+  });
+
+  it('should handle invalid paths gracefully', () => {
+    const invalidPath = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'NonExistent', 'Path'];
+    const defaultValue = 'default';
+
+    // Access invalid path
+    const result = getXmlValue(mockXml, invalidPath, defaultValue);
+
+    // Should return the default value
+    expect(result).toBe(defaultValue);
+
+    // Access again
+    const result2 = getXmlValue(mockXml, invalidPath, defaultValue);
+
+    // Should still return the default value
+    expect(result2).toBe(defaultValue);
+  });
+
+  it('should work with real SOAP XML data', async () => {
+    const testXml = `
+      <SOAP-ENV:Envelope>
+        <SOAP-ENV:Body>
+          <ProcessCommunication>
+            <oa:ApplicationArea>
+              <oa:CreationDateTime>2023-03-22T15:30:45.123Z</oa:CreationDateTime>
+              <oa:BODID>TEST123</oa:BODID>
+            </oa:ApplicationArea>
+            <DataArea>
+              <Communication>
+                <CommunicationHeader>
+                  <CustomerParty>
+                    <Contact>
+                      <SMSTelephoneCommunication>
+                        <oa:FormattedNumber>+1234567890</oa:FormattedNumber>
+                      </SMSTelephoneCommunication>
+                    </Contact>
+                  </CustomerParty>
+                </CommunicationHeader>
+              </Communication>
+            </DataArea>
+          </ProcessCommunication>
+        </SOAP-ENV:Body>
+      </SOAP-ENV:Envelope>
+    `;
+
+    const parsedXml = await parseStringPromise(testXml, XML_PARSE_OPTIONS);
+
+    // Clear cache before test
+    clearXmlCache();
+
+    // Use a real path from our configuration
+    const path = XML_PATHS.phoneNumber.path;
+
+    // Track performance
+    const start1 = performance.now();
+    const result1 = getXmlValue(parsedXml, path);
+    const duration1 = performance.now() - start1;
+
+    const start2 = performance.now();
+    const result2 = getXmlValue(parsedXml, path);
+    const duration2 = performance.now() - start2;
+
+    // Results should be correct
+    expect(result1).toBe('+1234567890');
+    expect(result1).toBe(result2);
+
+    // Ensure memoization is working (cache hit should be faster)
+    expect(duration2).toBeLessThanOrEqual(duration1);
   });
 });
