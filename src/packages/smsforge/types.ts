@@ -15,18 +15,25 @@ export enum SmsType {
 }
 
 /**
- * Order status types
+ * Order status types based on ATG types
  */
 export enum OrderStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled',
-  REFUNDED = 'refunded',
-  ALLOCATED = 'allocated',
-  COLLECTED = 'collected',
-  REMINDER = 'reminder'
+  // Order acknowledgment statuses
+  ORDER_SUBMITTED = 'ORDER_SUBMITTED',  // Order from WEB
+  NEW_ORDER = 'NEW_ORDER',              // Order from .com+
+
+  // Order allocation statuses
+  CANCELLED = 'CANCELLED',              // Zero Allocation
+  PARTIAL = 'PARTIAL',                  // Partial allocation
+  ALLOCATED = 'ALLOCATED',              // Full allocation
+
+  // Collection statuses
+  COLLECTED = 'COLLECTED',              // Collection confirmation
+
+  // Collection reminder statuses
+  REMINDER = 'REMINDER',                // Collection reminder
+  FINAL_REMINDER = 'FINAL_REMINDER',    // Final collection reminder
+  EXPIRY_ALERT = 'EXPIRY_ALERT'         // Collection expiry
 }
 
 /**
