@@ -1,4 +1,14 @@
-import { extractBrand, extractPhoneNumber, extractMessage, extractOrderId } from '../utils/extractor.js';
+import {
+  extractBrand,
+  extractPhoneNumber,
+  extractMessage,
+  extractOrderId,
+  extractBrandName,
+  extractChannel,
+  extractChannelName,
+  extractCreationDateTime,
+  extractActionExpression
+} from '../utils/extractor.js';
 import { AtgSoapXml } from '../types.js';
 
 describe('XML Extractors', () => {
@@ -62,6 +72,145 @@ describe('XML Extractors', () => {
       } as unknown as AtgSoapXml;
 
       expect(extractBrand(xml)).toBe('Unknown');
+    });
+  });
+
+  describe('extractBrandName', () => {
+    it('should extract brand name attribute', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              DataArea: [{
+                Communication: [{
+                  CommunicationHeader: [{
+                    BrandChannel: [{
+                      Brand: [{
+                        'oa:Code': [{
+                          $: { name: 'B&Q' }
+                        }]
+                      }]
+                    }]
+                  }]
+                }]
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractBrandName(xml)).toBe('B&Q');
+    });
+
+    it('should return undefined for missing brand name', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{}]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractBrandName(xml)).toBeUndefined();
+    });
+  });
+
+  describe('extractChannel', () => {
+    it('should extract channel code', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              DataArea: [{
+                Communication: [{
+                  CommunicationHeader: [{
+                    BrandChannel: [{
+                      Channel: [{
+                        'oa:Code': ['WEB']
+                      }]
+                    }]
+                  }]
+                }]
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractChannel(xml)).toBe('WEB');
+    });
+
+    it('should extract channel from object with name attribute', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              DataArea: [{
+                Communication: [{
+                  CommunicationHeader: [{
+                    BrandChannel: [{
+                      Channel: [{
+                        'oa:Code': [{
+                          $: { name: 'Web' },
+                          _: 'WEB'
+                        }]
+                      }]
+                    }]
+                  }]
+                }]
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractChannel(xml)).toBe('WEB');
+    });
+
+    it('should return undefined for missing channel', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{}]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractChannel(xml)).toBeUndefined();
+    });
+  });
+
+  describe('extractChannelName', () => {
+    it('should extract channel name attribute', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              DataArea: [{
+                Communication: [{
+                  CommunicationHeader: [{
+                    BrandChannel: [{
+                      Channel: [{
+                        'oa:Code': [{
+                          $: { name: 'Web' }
+                        }]
+                      }]
+                    }]
+                  }]
+                }]
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractChannelName(xml)).toBe('Web');
+    });
+
+    it('should return undefined for missing channel name', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{}]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractChannelName(xml)).toBeUndefined();
     });
   });
 
@@ -178,6 +327,66 @@ describe('XML Extractors', () => {
       } as unknown as AtgSoapXml;
 
       expect(extractOrderId(xml)).toBeUndefined();
+    });
+  });
+
+  describe('extractCreationDateTime', () => {
+    it('should extract valid creation date time', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              'oa:ApplicationArea': [{
+                'oa:CreationDateTime': ['2023-03-22T15:30:45.123Z']
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractCreationDateTime(xml)).toBe('2023-03-22T15:30:45.123Z');
+    });
+
+    it('should return undefined for missing creation date time', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{}]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractCreationDateTime(xml)).toBeUndefined();
+    });
+  });
+
+  describe('extractActionExpression', () => {
+    it('should extract valid action expression', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{
+            ProcessCommunication: [{
+              DataArea: [{
+                'oa:Process': [{
+                  'oa:ActionCriteria': [{
+                    'oa:ActionExpression': ['SMS']
+                  }]
+                }]
+              }]
+            }]
+          }]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractActionExpression(xml)).toBe('SMS');
+    });
+
+    it('should return undefined for missing action expression', () => {
+      const xml = {
+        'SOAP-ENV:Envelope': {
+          'SOAP-ENV:Body': [{}]
+        }
+      } as unknown as AtgSoapXml;
+
+      expect(extractActionExpression(xml)).toBeUndefined();
     });
   });
 });

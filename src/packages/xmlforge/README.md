@@ -5,7 +5,7 @@ A TypeScript package for extracting SMS data from ATG SOAP XML messages.
 ## Features
 
 - Parses ATG SOAP XML messages
-- Extracts SMS data (phone number, message, brand, order ID)
+- Extracts SMS data (phone number, message, brand, channel, order ID, etc.)
 - Validates XML structure and required fields
 - Type-safe with TypeScript
 - Comprehensive error handling
@@ -28,9 +28,15 @@ const soapXml = `
     <SOAP-ENV:Body>
       <ProcessCommunication>
         <oa:ApplicationArea>
+          <oa:CreationDateTime>2023-03-22T15:30:45.123Z</oa:CreationDateTime>
           <oa:BODID>ORDER123</oa:BODID>
         </oa:ApplicationArea>
         <DataArea>
+          <oa:Process>
+            <oa:ActionCriteria>
+              <oa:ActionExpression>SMS</oa:ActionExpression>
+            </oa:ActionCriteria>
+          </oa:Process>
           <Communication>
             <CommunicationHeader>
               <CustomerParty>
@@ -44,6 +50,9 @@ const soapXml = `
                 <Brand>
                   <oa:Code name="MyStore">MyStore</oa:Code>
                 </Brand>
+                <Channel>
+                  <oa:Code name="Web">WEB</oa:Code>
+                </Channel>
               </BrandChannel>
             </CommunicationHeader>
             <CommunicationItem>
@@ -66,7 +75,12 @@ try {
   //   phoneNumber: '+1234567890',
   //   message: 'Your order has been shipped',
   //   brand: 'MyStore',
-  //   orderId: 'ORDER123'
+  //   brandName: 'MyStore',
+  //   channel: 'WEB',
+  //   channelName: 'Web',
+  //   orderId: 'ORDER123',
+  //   creationDateTime: '2023-03-22T15:30:45.123Z',
+  //   actionExpression: 'SMS'
   // }
 } catch (error) {
   console.error('Failed to extract SMS data:', error);
@@ -79,9 +93,10 @@ The package expects SOAP XML messages in the format provided by the SMS service 
 
 - `SOAP-ENV:Envelope` and `SOAP-ENV:Body` for SOAP structure
 - `ProcessCommunication` as the main message type
-- `oa:ApplicationArea` containing the order ID
+- `oa:ApplicationArea` containing the order ID and creation timestamp
 - `DataArea` with communication details
-- `CommunicationHeader` for recipient and brand information
+- `oa:Process` and `oa:ActionCriteria` for action expressions
+- `CommunicationHeader` for recipient, brand and channel information
 - `CommunicationItem` for the message content
 
 Please refer to the provider's documentation for the complete XML specification.
@@ -100,7 +115,12 @@ Extracts SMS data from ATG SOAP XML.
   - `phoneNumber` (string): Recipient's phone number
   - `message` (string): SMS message content
   - `brand` (string): Brand identifier
+  - `brandName` (string, optional): Human-readable brand name
+  - `channel` (string, optional): Channel code (WEB, MOB, CCC, STR)
+  - `channelName` (string, optional): Human-readable channel name
   - `orderId` (string, optional): Associated order ID
+  - `creationDateTime` (string, optional): Message creation timestamp
+  - `actionExpression` (string, optional): SMS action type
 
 #### Throws
 - Error if XML is invalid
@@ -112,10 +132,24 @@ Extracts SMS data from ATG SOAP XML.
 ### `SmsData`
 ```typescript
 interface SmsData {
+  /** Customer phone number */
   phoneNumber: string;
+  /** Message to be sent */
   message: string;
+  /** Brand/sender of the message */
   brand: string;
+  /** Human readable brand name */
+  brandName?: string;
+  /** Channel code (WEB, MOB, CCC, STR) */
+  channel?: string;
+  /** Human readable channel name */
+  channelName?: string;
+  /** Order ID for tracking */
   orderId?: string;
+  /** Creation date and time of the message */
+  creationDateTime?: string;
+  /** Action expression for determining message type */
+  actionExpression?: string;
 }
 ```
 
@@ -126,30 +160,36 @@ interface AtgSoapXml {
     'SOAP-ENV:Body': [{
       ProcessCommunication: [{
         'oa:ApplicationArea': [{
-          'oa:BODID': string[];
+          'oa:CreationDateTime': [string];
+          'oa:BODID': [string];
         }];
         DataArea: [{
+          'oa:Process': [{
+            'oa:ActionCriteria': [{
+              'oa:ActionExpression': [string];
+            }];
+          }];
           Communication: [{
             CommunicationHeader: [{
               CustomerParty: [{
                 Contact: [{
                   SMSTelephoneCommunication: [{
-                    'oa:FormattedNumber': string[];
+                    'oa:FormattedNumber': [string];
                   }];
                 }];
               }];
               BrandChannel: [{
                 Brand: [{
-                  'oa:Code': Array<{
-                    $: { name: string };
-                    _: string;
-                  }>;
+                  'oa:Code': [{ $: { name: string } } | string];
+                }];
+                Channel: [{
+                  'oa:Code': [{ $: { name: string } } | string];
                 }];
               }];
             }];
             CommunicationItem: [{
               'oa:Message': [{
-                'oa:Note': string[];
+                'oa:Note': [string];
               }];
             }];
           }];
@@ -178,7 +218,6 @@ xmlforge/
 ├── __tests__/           # Test files
 ├── utils/              # Utility functions
 │   ├── xml.ts         # XML parsing utilities
-│   ├── cache.ts       # Caching utilities
 │   └── extractor.ts   # Data extraction utilities
 ├── config.ts          # Configuration and constants
 ├── index.ts           # Main exports

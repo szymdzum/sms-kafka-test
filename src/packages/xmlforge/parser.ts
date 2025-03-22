@@ -6,7 +6,17 @@ import { parseStringPromise } from 'xml2js';
 import logger from '../../logger.js';
 import { SmsData, AtgSoapXml } from './types.js';
 import { XML_PARSE_OPTIONS, validateSoapXml } from './utils/xml.js';
-import { extractPhoneNumber, extractMessage, extractBrand, extractOrderId } from './utils/extractor.js';
+import {
+  extractPhoneNumber,
+  extractMessage,
+  extractBrand,
+  extractBrandName,
+  extractChannel,
+  extractChannelName,
+  extractOrderId,
+  extractCreationDateTime,
+  extractActionExpression
+} from './utils/extractor.js';
 
 /**
  * Parses ATG SOAP XML and extracts structured SMS data
@@ -22,7 +32,14 @@ export async function extractSmsData(soapXml: string): Promise<SmsData> {
     const phoneNumber = extractPhoneNumber(parsedXml);
     const message = extractMessage(parsedXml);
     const brand = extractBrand(parsedXml);
+
+    // Extract optional information
+    const brandName = extractBrandName(parsedXml);
+    const channel = extractChannel(parsedXml);
+    const channelName = extractChannelName(parsedXml);
     const orderId = extractOrderId(parsedXml);
+    const creationDateTime = extractCreationDateTime(parsedXml);
+    const actionExpression = extractActionExpression(parsedXml);
 
     // Validate required fields
     if (!phoneNumber || !message || !brand) {
@@ -33,12 +50,18 @@ export async function extractSmsData(soapXml: string): Promise<SmsData> {
       phoneNumber,
       message,
       brand,
-      orderId
+      brandName,
+      channel,
+      channelName,
+      orderId,
+      creationDateTime,
+      actionExpression
     };
 
     logger.info('Extracted SMS data from XML', {
       orderId: smsData.orderId,
-      brand: smsData.brand
+      brand: smsData.brand,
+      channel: smsData.channel
     });
 
     return smsData;
