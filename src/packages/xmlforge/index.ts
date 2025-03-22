@@ -4,12 +4,15 @@
  * This package provides tools for extracting SMS data from ATG SOAP XML messages.
  */
 
+import { extractSmsData } from './parser.js';
+
 // Export types
 export * from './types.js';
+export * from './config.js';
+export * from './parser.js';
 
-// Export transformer function
-export { transformXmlToSmsData } from './transformer.js';
+// Export main parser
+export { extractSmsData } from './parser.js';
 
 // Default export for convenience
-import { transformXmlToSmsData } from './transformer.js';
-export default transformXmlToSmsData;
+export default extractSmsData;

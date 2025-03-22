@@ -5,8 +5,8 @@
 import { parseStringPromise } from 'xml2js';
 import logger from '../../logger.js';
 import { SmsData, AtgSoapXml } from './types.js';
-import { XML_PARSE_OPTIONS, validateSoapXml } from './utils.js';
-import { extractPhoneNumber, extractMessage, extractBrand, extractOrderId } from './extractor.js';
+import { XML_PARSE_OPTIONS, validateSoapXml } from './utils/xml.js';
+import { extractPhoneNumber, extractMessage, extractBrand, extractOrderId } from './utils/extractor.js';
 
 /**
  * Parses ATG SOAP XML and extracts structured SMS data

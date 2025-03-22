@@ -1,24 +1,58 @@
-# XMLForge
+# XmlForge
 
-XMLForge is a TypeScript package designed to extract SMS data from ATG SOAP XML messages. It provides a robust and type-safe way to parse and validate SMS-related information from XML structures.
+A TypeScript package for extracting SMS data from ATG SOAP XML messages.
 
 ## Features
 
-- Type-safe XML parsing
-- Structured SMS data extraction
-- Built-in validation
+- Parses ATG SOAP XML messages
+- Extracts SMS data (phone number, message, brand, order ID)
+- Validates XML structure and required fields
+- Type-safe with TypeScript
 - Comprehensive error handling
 - Detailed logging
+
+## Installation
+
+```bash
+npm install xmlforge
+```
 
 ## Usage
 
 ```typescript
-// Example SOAP XML
+import { extractSmsData } from 'xmlforge';
+
+// Example SOAP XML based on provider's specification
 const soapXml = `
   <SOAP-ENV:Envelope>
     <SOAP-ENV:Body>
       <ProcessCommunication>
-        <!-- ... XML content ... -->
+        <oa:ApplicationArea>
+          <oa:BODID>ORDER123</oa:BODID>
+        </oa:ApplicationArea>
+        <DataArea>
+          <Communication>
+            <CommunicationHeader>
+              <CustomerParty>
+                <Contact>
+                  <SMSTelephoneCommunication>
+                    <oa:FormattedNumber>+1234567890</oa:FormattedNumber>
+                  </SMSTelephoneCommunication>
+                </Contact>
+              </CustomerParty>
+              <BrandChannel>
+                <Brand>
+                  <oa:Code name="MyStore">MyStore</oa:Code>
+                </Brand>
+              </BrandChannel>
+            </CommunicationHeader>
+            <CommunicationItem>
+              <oa:Message>
+                <oa:Note>Your order has been shipped</oa:Note>
+              </oa:Message>
+            </CommunicationItem>
+          </Communication>
+        </DataArea>
       </ProcessCommunication>
     </SOAP-ENV:Body>
   </SOAP-ENV:Envelope>
@@ -29,15 +63,28 @@ try {
   console.log(smsData);
   // Output:
   // {
-  //   phoneNumber: "+1234567890",
-  //   message: "Your order has been shipped",
-  //   brand: "MyStore",
-  //   orderId: "ORDER123"
+  //   phoneNumber: '+1234567890',
+  //   message: 'Your order has been shipped',
+  //   brand: 'MyStore',
+  //   orderId: 'ORDER123'
   // }
 } catch (error) {
-  console.error('Failed to parse SMS data:', error);
+  console.error('Failed to extract SMS data:', error);
 }
 ```
+
+## XML Format
+
+The package expects SOAP XML messages in the format provided by the SMS service provider. The XML structure follows the ATG SOAP specification with the following key elements:
+
+- `SOAP-ENV:Envelope` and `SOAP-ENV:Body` for SOAP structure
+- `ProcessCommunication` as the main message type
+- `oa:ApplicationArea` containing the order ID
+- `DataArea` with communication details
+- `CommunicationHeader` for recipient and brand information
+- `CommunicationItem` for the message content
+
+Please refer to the provider's documentation for the complete XML specification.
 
 ## API
 
@@ -46,42 +93,106 @@ try {
 Extracts SMS data from ATG SOAP XML.
 
 #### Parameters
-- `soapXml`: string - The SOAP XML string to parse
+- `soapXml` (string): The SOAP XML message to parse
 
 #### Returns
-- `Promise<SmsData>` - A promise that resolves to the extracted SMS data
+- `Promise<SmsData>`: Object containing:
+  - `phoneNumber` (string): Recipient's phone number
+  - `message` (string): SMS message content
+  - `brand` (string): Brand identifier
+  - `orderId` (string, optional): Associated order ID
 
-#### SmsData Interface
+#### Throws
+- Error if XML is invalid
+- Error if required fields are missing
+- Error if parsing fails
+
+## Types
+
+### `SmsData`
 ```typescript
 interface SmsData {
-  phoneNumber: string;  // Customer phone number
-  message: string;      // Message to be sent
-  brand: string;        // Brand/sender of the message
-  orderId?: string;     // Optional order ID for tracking
+  phoneNumber: string;
+  message: string;
+  brand: string;
+  orderId?: string;
+}
+```
+
+### `AtgSoapXml`
+```typescript
+interface AtgSoapXml {
+  'SOAP-ENV:Envelope': {
+    'SOAP-ENV:Body': [{
+      ProcessCommunication: [{
+        'oa:ApplicationArea': [{
+          'oa:BODID': string[];
+        }];
+        DataArea: [{
+          Communication: [{
+            CommunicationHeader: [{
+              CustomerParty: [{
+                Contact: [{
+                  SMSTelephoneCommunication: [{
+                    'oa:FormattedNumber': string[];
+                  }];
+                }];
+              }];
+              BrandChannel: [{
+                Brand: [{
+                  'oa:Code': Array<{
+                    $: { name: string };
+                    _: string;
+                  }>;
+                }];
+              }];
+            }];
+            CommunicationItem: [{
+              'oa:Message': [{
+                'oa:Note': string[];
+              }];
+            }];
+          }];
+        }];
+      }];
+    }];
+  };
 }
 ```
 
 ## Error Handling
 
-The package includes comprehensive error handling:
-- Validates XML input
-- Checks for required fields
-- Provides detailed error messages
-- Logs errors and warnings
+The package provides detailed error messages for common issues:
+
+- Invalid XML structure
+- Missing required fields
+- Parsing errors
+
+All errors are logged with context for debugging.
 
 ## Development
 
 ### Project Structure
 ```
 xmlforge/
-├── config.ts      # XML path configurations
-├── extractor.ts   # SMS data extraction functions
-├── sms-parser.ts  # Main parser implementation
-├── types.ts       # TypeScript type definitions
-├── utils.ts       # Utility functions
-└── index.ts       # Package entry point
+├── __tests__/           # Test files
+├── utils/              # Utility functions
+│   ├── xml.ts         # XML parsing utilities
+│   ├── cache.ts       # Caching utilities
+│   └── extractor.ts   # Data extraction utilities
+├── config.ts          # Configuration and constants
+├── index.ts           # Main exports
+├── parser.ts          # Main parser implementation
+├── types.ts           # TypeScript type definitions
+└── README.md          # This file
 ```
 
-## License
+### Running Tests
+```bash
+npm test
+```
 
-MIT
+### Building
+```bash
+npm run build
+```

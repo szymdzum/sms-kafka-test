@@ -1,11 +1,10 @@
 /**
  * SMS-specific extraction functions for XmlForge
  */
-
-import logger from '../../logger.js';
-import { AtgSoapXml } from './types.js';
-import { XML_PATHS } from './config.js';
-import { getXmlValue } from './utils.js';
+import logger from '../../../logger.js';
+import { AtgSoapXml } from '../types.js';
+import { XML_PATHS } from '../config.js';
+import { getXmlValue } from './xml.js';
 
 /**
  * Extract the phone number from ATG SOAP XML
@@ -40,7 +39,7 @@ export function extractBrand(xml: AtgSoapXml): string {
 
     // Handle both string and object with name attribute
     if (typeof brandElement === 'string') {
-      return brandElement;
+      return brandElement || 'Unknown';
     }
     return brandElement?.$?.name || 'Unknown';
   } catch (error) {
@@ -52,11 +51,12 @@ export function extractBrand(xml: AtgSoapXml): string {
 /**
  * Extract order ID from ATG SOAP XML
  */
-export function extractOrderId(xml: AtgSoapXml): string {
+export function extractOrderId(xml: AtgSoapXml): string | undefined {
   try {
-    return getXmlValue(xml, XML_PATHS.orderId.path);
+    const orderId = getXmlValue<string>(xml, XML_PATHS.orderId.path);
+    return orderId || undefined;
   } catch (error) {
     logger.warn('Could not extract order ID from SOAP XML', { error });
-    return '';
+    return undefined;
   }
 }

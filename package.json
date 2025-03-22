@@ -8,14 +8,12 @@
         "build": "tsc",
         "start": "node dist/index.js",
         "dev": "node --import tsx src/index.ts",
-        "ts-node": "npx tsx",
-        "soap-test": "npx tsx src/tests/soap-test.ts",
-        "soap-batch": "npx tsx src/tests/soap-batch-test.ts",
-        "infobip-test": "npx tsx src/tests/infobip/infobip-batch-test.ts",
-        "infobip-demo": "npx tsx src/tests/infobip/infobip-demo.ts",
-        "send-sms": "npx tsx src/tests/infobip/send-test-sms.ts",
-        "send-bulk-sms": "npx tsx src/tests/infobip/send-bulk-sms.ts",
-        "xmlforge-demo": "npx tsx src/tests/infobip/xmlforge-demo.ts"
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "lint": "eslint . --ext .ts",
+        "lint:fix": "eslint . --ext .ts --fix",
+        "clean": "rm -rf dist coverage"
     },
     "engines": {
         "node": ">=18.0.0 <23.0.0"
@@ -36,9 +34,12 @@
     },
     "devDependencies": {
         "@types/dotenv": "^6.1.1",
+        "@types/jest": "^29.5.14",
         "@types/winston": "^2.4.4",
         "@typescript-eslint/eslint-plugin": "^8.26.1",
         "@typescript-eslint/parser": "^8.26.1",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.1.2",
         "ts-node": "^10.9.2",
         "tslib": "^2.8.1",
         "tsx": "^4.19.3",

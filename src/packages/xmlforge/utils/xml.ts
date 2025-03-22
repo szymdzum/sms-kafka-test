@@ -1,9 +1,9 @@
 /**
- * Generic XML utilities for the XmlForge package
+ * XML utilities for XmlForge
  */
 
-import { AtgSoapXml } from './types.js';
-import { XmlPath } from './config.js';
+import { AtgSoapXml } from '../types.js';
+import { XmlPath } from '../config.js';
 
 /**
  * Safely get value from XML using path
