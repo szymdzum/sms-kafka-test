@@ -1,19 +1,18 @@
-# MessageForge
+# SMSForge
 
-A flexible message templating system for handling SMS and email messages with parameter substitution.
+A flexible SMS templating system for handling order status notifications with parameter substitution.
 
 ## Features
 
-- Template-based message formatting
+- SMS template-based message formatting
 - Parameter validation and substitution
-- Support for SMS and email message types
-- Status-based message templates
+- Status-based SMS templates
 - Type-safe template configuration
 
 ## Installation
 
 ```bash
-npm install messageforge
+npm install smsforge
 ```
 
 ## Usage
@@ -21,7 +20,7 @@ npm install messageforge
 ### Basic Template Usage
 
 ```typescript
-import { MessageTemplate, MessageType } from 'messageforge';
+import { MessageTemplate, MessageType } from 'smsforge';
 
 const template = new MessageTemplate({
   type: MessageType.SMS,
@@ -43,7 +42,7 @@ import {
   fullAllocationTemplate,
   collectionConfirmationTemplate,
   collectionReminderTemplate
-} from 'messageforge/templates';
+} from 'smsforge/templates';
 
 // Full Allocation
 const allocationMessage = fullAllocationTemplate.format({
@@ -104,8 +103,7 @@ new MessageTemplate({
 
 ```typescript
 enum MessageType {
-  SMS = 'SMS',
-  EMAIL = 'EMAIL'
+  SMS = 'SMS'
 }
 
 enum OrderStatus {
@@ -130,7 +128,7 @@ The package throws two types of errors:
 
 ### Project Structure
 ```
-messageforge/
+smsforge/
 ├── __tests__/           # Test files
 ├── templates/          # Predefined templates
 ├── types.ts           # TypeScript type definitions

@@ -1,17 +1,25 @@
 /**
- * Message template implementation
+ * SMS template implementation
  */
-import { MessageType, OrderStatus, TemplateConfig, TemplateParams, TemplateValidationError, TemplateParameterError } from './types.js';
+import {
+  SmsType,
+  OrderStatus,
+  TemplateConfig,
+  TemplateParams,
+  TemplateValidationError,
+  TemplateParameterError
+} from './types.js';
 
-export { MessageType, OrderStatus };
+export { SmsType, OrderStatus };
 
 /**
- * Message template class for handling message formatting
+ * SMS template class for handling message formatting
  */
 export class MessageTemplate {
-  private readonly type: MessageType;
+  private readonly type: SmsType;
   private readonly status?: OrderStatus;
   private readonly template: string;
+  private readonly from?: string;
   private readonly requiredParams: string[];
 
   constructor(config: TemplateConfig) {
@@ -19,6 +27,7 @@ export class MessageTemplate {
     this.type = config.type;
     this.status = config.status;
     this.template = config.template;
+    this.from = config.from;
     this.requiredParams = config.requiredParams;
   }
 
@@ -33,7 +42,7 @@ export class MessageTemplate {
   /**
    * Get the message type
    */
-  getType(): MessageType {
+  getType(): SmsType {
     return this.type;
   }
 
@@ -49,6 +58,13 @@ export class MessageTemplate {
    */
   getTemplate(): string {
     return this.template;
+  }
+
+  /**
+   * Get the from number
+   */
+  getFrom(): string | undefined {
+    return this.from;
   }
 
   /**
@@ -88,7 +104,7 @@ export class MessageTemplate {
   private replaceParams(template: string, params: TemplateParams): string {
     return template.replace(/\{(\w+)\}/g, (match: string, key: string): string => {
       const value = params[key];
-      return value !== undefined ? value : match;
+      return value !== undefined ? String(value) : match;
     });
   }
 }

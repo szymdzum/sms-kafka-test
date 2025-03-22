@@ -1,32 +1,43 @@
 /**
- * Types for MessageForge package
+ * Types for SMSForge package
  */
 
 /**
- * Supported message types
+ * SMS message types
  */
-export enum MessageType {
-  SMS = 'SMS',
-  EMAIL = 'EMAIL'
+export enum SmsType {
+  ORDER = 'order',
+  SHIPPING = 'shipping',
+  DELIVERY = 'delivery',
+  CANCELLATION = 'cancellation',
+  REFUND = 'refund',
+  CUSTOMER_SERVICE = 'customer_service'
 }
 
 /**
  * Order status types
  */
 export enum OrderStatus {
-  ALLOCATED = 'ALLOCATED',
-  COLLECTED = 'COLLECTED',
-  REMINDER = 'REMINDER'
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
+  ALLOCATED = 'allocated',
+  COLLECTED = 'collected',
+  REMINDER = 'reminder'
 }
 
 /**
  * Template configuration
  */
 export interface TemplateConfig {
-  type: MessageType;
+  type: SmsType;
   template: string;
   requiredParams: string[];
   status?: OrderStatus;
+  from?: string;
 }
 
 /**
