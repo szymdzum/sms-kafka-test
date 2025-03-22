@@ -4,13 +4,12 @@ A TypeScript package for extracting SMS data from ATG SOAP XML messages.
 
 ## Features
 
-- Parses ATG SOAP XML messages
+- Parses ATG SOAP XML messages with simplified approach
 - Extracts SMS data (phone number, message, brand, channel, order ID, etc.)
 - Validates XML structure and required fields
 - Type-safe with TypeScript
 - Comprehensive error handling
-- Detailed logging
-- Performance optimization with memoization
+- Clean, maintainable code with minimal complexity
 
 ## Installation
 
@@ -123,43 +122,34 @@ Extracts SMS data from ATG SOAP XML.
 
 ### Utility Functions
 
-#### `getXmlValue<T>(xml, path, defaultValue, emptyAsUndefined, validator): T`
+#### `safeGet<T>(obj, path, defaultValue): T | undefined`
 
-Type-safe function to extract values from XML using a path.
+Type-safe function to access nested properties in an object.
 
 **Parameters**
-- `xml` (GenericXml): The XML object to extract from
-- `path` (readonly (string | number)[]): Array of path segments to traverse
+- `obj` (Record<string, unknown>): The object to access
+- `path` (string[]): Array of path segments to traverse
 - `defaultValue` (T, optional): Default value to return if path not found
-- `emptyAsUndefined` (boolean, optional): Whether to return undefined for empty strings
-- `validator` (ValueValidator<T>, optional): Function to validate the extracted value
 
-#### `getXmlTextValue(xml, path, textProperty): string | undefined`
+**Returns**
+- The value at the specified path, or the default value if the path doesn't exist
 
-Extracts text content from XML, handling complex elements with attributes.
+### Simplified XML Parsing
 
-**Parameters**
-- `xml` (GenericXml): The XML object to extract from
-- `path` (readonly (string | number)[]): Array of path segments to traverse
-- `textProperty` (string, optional): The property to extract if result is an object (defaults to '_')
+XmlForge uses the `xml2js` library with simplified options for parsing XML:
 
-#### `clearXmlCache(): void`
+```typescript
+const parsed = await parseStringPromise(soapXml, {
+  explicitArray: false,
+  normalize: true,
+  trim: true
+});
+```
 
-Clears the internal memoization cache for XML path resolution. Useful when processing multiple XML documents or when memory usage is a concern.
-
-## Performance Optimization
-
-XmlForge includes built-in performance optimizations:
-
-- **Memoization** of XML path resolution for faster repeated access to the same paths
-- **Efficient traversal** of XML structure with early termination
-- **Smart caching** of intermediate results
-
-For large XML documents or high-throughput applications, consider these additional tips:
-
-- Call `clearXmlCache()` after processing each document to prevent memory leaks
-- Batch process related XML documents to take advantage of the memoization cache
-- Use specific paths rather than broad searches for better performance
+This configuration provides a more intuitive object structure that's easier to work with:
+- `explicitArray: false` prevents single child nodes from being placed in arrays
+- `normalize: true` normalizes whitespace in text nodes
+- `trim: true` removes leading and trailing whitespace
 
 ## Types
 
@@ -187,56 +177,15 @@ interface SmsData {
 }
 ```
 
-### `XmlElement`
-```typescript
-interface XmlElement<T = string> {
-  _?: T;
-  $?: {
-    name?: string;
-    [key: string]: unknown;
-  };
-}
-```
-
-### `GenericXml`
-```typescript
-type GenericXml = {
-  [key: string]: GenericXmlValue;
-};
-
-type GenericXmlValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | GenericXmlArray
-  | GenericXmlObject
-  | XmlAttributes;
-
-type GenericXmlArray = Array<GenericXmlValue>;
-
-type GenericXmlObject = {
-  [key: string]: GenericXmlValue;
-  $?: XmlAttributes;
-  _?: string;
-};
-
-interface XmlAttributes {
-  name?: string;
-  [attr: string]: unknown;
-}
-```
-
 ## Error Handling
 
 The package provides detailed error messages for common issues:
 
-- Invalid XML structure
+- Invalid XML structure (with specific sections identified)
 - Missing required fields
 - Parsing errors
 
-All errors are logged with context for debugging.
+All errors include context for easier debugging.
 
 ## Development
 
@@ -245,11 +194,10 @@ All errors are logged with context for debugging.
 xmlforge/
 ├── __tests__/           # Test files
 ├── utils/              # Utility functions
-│   └── xml.ts         # XML parsing utilities
-├── config.ts          # Configuration constants
-├── index.ts           # Main exports
+│   └── xml.ts         # XML validation utilities
 ├── parser.ts          # Main parser implementation
 ├── types.ts           # TypeScript type definitions
+├── index.ts           # Main exports
 └── README.md          # This file
 ```
 
