@@ -1,5 +1,5 @@
-import { MessageTemplate, SmsType } from '../template.js';
-import { TemplateConfig, TemplateParams, TemplateValidationError, TemplateParameterError } from '../types.js';
+import { MessageTemplate, SmsType, OrderStatus } from '../template.js';
+import { TemplateParams, TemplateValidationError, TemplateParameterError } from '../types.js';
 
 describe('MessageTemplate', () => {
   describe('constructor', () => {
@@ -75,6 +75,67 @@ describe('MessageTemplate', () => {
       };
 
       expect(template.format(params)).toBe('Hello John! Good morning!');
+    });
+  });
+
+  describe('message generation', () => {
+    it('should generate message with order status', () => {
+      const template = new MessageTemplate({
+        type: SmsType.ORDER,
+        status: OrderStatus.ALLOCATED,
+        template: 'Order {orderId} is {status}',
+        requiredParams: ['orderId']
+      });
+
+      const message = template.format({ orderId: '12345' });
+      expect(message).toBe('Order 12345 is {status}');
+      expect(template.getStatus()).toBe(OrderStatus.ALLOCATED);
+    });
+
+    it('should handle multiple parameters in template', () => {
+      const template = new MessageTemplate({
+        type: SmsType.ORDER,
+        template: 'Order {orderId} for {customerName} is ready at {location}',
+        requiredParams: ['orderId', 'customerName', 'location']
+      });
+
+      const message = template.format({
+        orderId: '12345',
+        customerName: 'John Doe',
+        location: 'Store A'
+      });
+
+      expect(message).toBe('Order 12345 for John Doe is ready at Store A');
+    });
+
+    it('should preserve non-parameter text in template', () => {
+      const template = new MessageTemplate({
+        type: SmsType.ORDER,
+        template: 'Your order {orderId} is ready. Please collect from {location}. Thank you!',
+        requiredParams: ['orderId', 'location']
+      });
+
+      const message = template.format({
+        orderId: '12345',
+        location: 'Main Store'
+      });
+
+      expect(message).toBe('Your order 12345 is ready. Please collect from Main Store. Thank you!');
+    });
+
+    it('should handle special characters in parameters', () => {
+      const template = new MessageTemplate({
+        type: SmsType.ORDER,
+        template: 'Order {orderId} - {description}',
+        requiredParams: ['orderId', 'description']
+      });
+
+      const message = template.format({
+        orderId: '12345',
+        description: 'Special chars: !@#$%^&*()'
+      });
+
+      expect(message).toBe('Order 12345 - Special chars: !@#$%^&*()');
     });
   });
 });

@@ -1,15 +1,15 @@
 # EmailForge
 
-A flexible email templating system for handling order status notifications with parameter substitution.
+A package for handling email message templating with support for both plain text and HTML formats.
 
 ## Features
 
-- Email template-based message formatting
-- Parameter validation and substitution
-- Status-based email templates
-- Type-safe template configuration
-- Email subject line support
-- InfoBip Email API integration
+- Type-safe email template configuration
+- Support for plain text and HTML templates
+- Parameter validation and error handling
+- Customizable email headers (from, reply-to)
+- Order status tracking
+- Template parameter interpolation
 
 ## Installation
 
@@ -19,178 +19,154 @@ npm install emailforge
 
 ## Usage
 
-### Basic Template Usage
+### Basic Example
 
 ```typescript
-import { EmailTemplate, MessageType } from 'emailforge';
+import { EmailTemplate, EmailType } from './template';
+import { EmailTemplateConfig } from './types';
 
-const template = new EmailTemplate({
-  type: MessageType.EMAIL,
-  subject: 'Order Status Update',
-  template: 'Dear {name},\n\nYour order {orderId} is ready.',
-  requiredParams: ['name', 'orderId']
-});
+const config: EmailTemplateConfig = {
+  type: EmailType.ORDER,
+  template: 'Your order {orderId} has been confirmed.',
+  htmlTemplate: '<p>Your order <strong>{orderId}</strong> has been confirmed.</p>',
+  subject: 'Order Confirmation',
+  requiredParams: ['orderId'],
+  from: 'orders@example.com',
+  replyTo: 'support@example.com'
+};
 
-const message = template.format({
-  name: 'John',
+const template = new EmailTemplate(config);
+
+const email = template.format({
   orderId: '12345'
 });
+
+// Result:
+// {
+//   subject: 'Order Confirmation',
+//   text: 'Your order 12345 has been confirmed.',
+//   html: '<p>Your order <strong>12345</strong> has been confirmed.</p>',
+//   from: 'orders@example.com',
+//   replyTo: 'support@example.com'
+// }
 ```
 
-### InfoBip Integration
+### Available Email Types
 
 ```typescript
-import { EmailTemplate, MessageType } from 'emailforge';
-import { InfobipEmailClient } from 'emailforge/infobip';
-
-// Create InfoBip client
-const client = new InfobipEmailClient({
-  apiKey: 'your-api-key',
-  from: 'noreply@yourdomain.com'
-});
-
-// Create template
-const template = new EmailTemplate({
-  type: MessageType.EMAIL,
-  subject: 'Order Ready for Collection',
-  template: 'Dear {firstName},\n\nYour order {orderId} is ready for collection at {storeName}.',
-  requiredParams: ['firstName', 'orderId', 'storeName']
-});
-
-// Send email
-try {
-  const response = await client.sendEmail(
-    template,
-    ['customer@example.com'],
-    {
-      firstName: 'John',
-      orderId: '12345',
-      storeName: 'Main Store'
-    },
-    {
-      cc: ['manager@example.com'],
-      replyTo: 'support@example.com'
-    }
-  );
-
-  console.log('Email sent:', response.messages[0].messageId);
-} catch (error) {
-  console.error('Failed to send email:', error);
+enum EmailType {
+  ORDER = 'order',
+  SHIPPING = 'shipping',
+  DELIVERY = 'delivery',
+  CANCELLATION = 'cancellation',
+  REFUND = 'refund',
+  CUSTOMER_SERVICE = 'customer_service'
 }
 ```
 
-### Predefined Order Status Templates
+### Order Status Types
 
 ```typescript
-import {
-  fullAllocationTemplate,
-  collectionConfirmationTemplate,
-  collectionReminderTemplate
-} from 'emailforge/templates';
-
-// Full Allocation
-const allocationMessage = fullAllocationTemplate.format({
-  firstName: 'John',
-  orderId: '12345',
-  storeName: 'Main Store',
-  collectionPoint: 'Customer Service',
-  storeAddress: '123 Main St, City',
-  collectionHours: '9 AM - 5 PM'
-});
-
-// Collection Confirmation
-const confirmationMessage = collectionConfirmationTemplate.format({
-  firstName: 'John',
-  orderId: '12345',
-  collectionDate: '2024-03-22'
-});
-
-// Collection Reminder
-const reminderMessage = collectionReminderTemplate.format({
-  firstName: 'John',
-  orderId: '12345',
-  expiryDate: '2024-03-25',
-  storeName: 'Main Store'
-});
+enum OrderStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded'
+}
 ```
+
+### Template Configuration
+
+The `EmailTemplateConfig` interface defines the structure for email templates:
+
+```typescript
+interface EmailTemplateConfig {
+  type: EmailType;              // Type of email message
+  template: string;             // Plain text template
+  requiredParams: string[];     // Required parameters for the template
+  status?: OrderStatus;         // Optional order status
+  htmlTemplate?: string;        // Optional HTML template
+  subject: string;              // Email subject
+  from?: string;               // Optional sender email
+  replyTo?: string;            // Optional reply-to email
+}
+```
+
+### Error Handling
+
+The package includes two types of errors:
+
+1. `TemplateValidationError`: Thrown when template configuration is invalid
+   - Missing template string
+   - Missing subject
+   - Invalid required parameters array
+
+2. `TemplateParameterError`: Thrown when required parameters are missing during formatting
 
 ## API Reference
 
-### EmailTemplate
+### EmailTemplate Class
 
 #### Constructor
 ```typescript
+constructor(config: EmailTemplateConfig)
+```
+
+#### Methods
+
+- `format(params: EmailTemplateParams): FormattedEmail`
+  - Formats the template with provided parameters
+  - Returns a `FormattedEmail` object containing subject, text, and optional HTML content
+
+#### Getters
+
+- `getType(): EmailType`
+- `getStatus(): OrderStatus | undefined`
+- `getTemplate(): string`
+- `getHtmlTemplate(): string | undefined`
+- `getSubject(): string`
+- `getFrom(): string | undefined`
+- `getReplyTo(): string | undefined`
+- `getRequiredParams(): string[]`
+
+## Best Practices
+
+1. Always specify required parameters in the configuration
+2. Use HTML templates for rich email content
+3. Set appropriate email headers (from, reply-to) for better deliverability
+4. Handle both validation and parameter errors in your application
+5. Use type-safe enums for email types and order statuses
+
+## Error Examples
+
+### Missing Required Parameters
+```typescript
+const template = new EmailTemplate({
+  type: EmailType.ORDER,
+  template: 'Order {orderId} status: {status}',
+  subject: 'Order Status',
+  requiredParams: ['orderId', 'status']
+});
+
+// This will throw TemplateParameterError
+template.format({
+  orderId: '12345'
+  // Missing 'status' parameter
+});
+```
+
+### Invalid Configuration
+```typescript
+// This will throw TemplateValidationError
 new EmailTemplate({
-  type: MessageType,
-  template: string,
-  requiredParams: string[],
-  status?: OrderStatus,
-  subject?: string
-})
+  type: EmailType.ORDER,
+  template: '', // Empty template
+  subject: 'Order Status',
+  requiredParams: ['orderId']
+});
 ```
-
-#### Methods
-- `format(params: TemplateParams): string` - Format the template with provided parameters
-- `getType(): MessageType` - Get the message type
-- `getStatus(): OrderStatus | undefined` - Get the order status
-- `getSubject(): string | undefined` - Get the email subject
-- `getTemplate(): string` - Get the template string
-- `getRequiredParams(): string[]` - Get required parameters
-
-### InfobipEmailClient
-
-#### Constructor
-```typescript
-new InfobipEmailClient({
-  apiKey: string,
-  baseUrl?: string,
-  from?: string
-})
-```
-
-#### Methods
-- `sendEmail(template: EmailTemplate, to: string[], params: Record<string, string>, options?: Partial<InfobipEmailRequest>): Promise<InfobipEmailResponse>` - Send email using a template
-
-### Types
-
-```typescript
-enum MessageType {
-  EMAIL = 'EMAIL'
-}
-
-enum OrderStatus {
-  ALLOCATED = 'ALLOCATED',
-  COLLECTED = 'COLLECTED',
-  REMINDER = 'REMINDER'
-}
-
-interface TemplateParams {
-  [key: string]: string;
-}
-
-interface InfobipEmailRequest {
-  from: string;
-  to: string[];
-  subject: string;
-  text?: string;
-  html?: string;
-  cc?: string[];
-  bcc?: string[];
-  replyTo?: string;
-  attachments?: Array<{
-    filename: string;
-    content: string;
-    contentType: string;
-  }>;
-}
-```
-
-## Error Handling
-
-The package throws two types of errors:
-
-- `TemplateValidationError`: When template configuration is invalid
-- `TemplateParameterError`: When required parameters are missing
 
 ## Development
 

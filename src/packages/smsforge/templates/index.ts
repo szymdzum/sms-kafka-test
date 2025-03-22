@@ -1,6 +1,6 @@
 /**
- * Export all message templates
+ * SMSForge templates exports
  */
-export { fullAllocationTemplate } from './full-allocation.js';
-export { collectionConfirmationTemplate } from './collection-confirmation.js';
-export { collectionReminderTemplate } from './collection-reminder.js';
+export * from './collection.js';
+export * from './confirmation.js';
+export * from './reminder.js';
