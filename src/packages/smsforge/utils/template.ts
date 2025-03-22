@@ -14,7 +14,7 @@ import {
  * @returns The corresponding MessageTemplate
  * @throws TemplateNotFoundError if no template is found for the given status
  */
-export function getTemplateForStatus(orderStatus: OrderStatus): MessageTemplate {
+export function createMessageForStatus(orderStatus: OrderStatus): MessageTemplate {
   const template = TEMPLATE_MAP.get(orderStatus);
   if (!template) {
     throw new TemplateNotFoundError(orderStatus);
@@ -29,11 +29,11 @@ export function getTemplateForStatus(orderStatus: OrderStatus): MessageTemplate 
  * @param data - Object containing only the data needed for message generation
  * @returns The generated SMS message
  */
-export async function generateSmsForOrder(data: {
+export async function createMessage(data: {
   orderId: string;
   orderStatus: OrderStatus;
 }): Promise<string> {
-  const template = getTemplateForStatus(data.orderStatus);
+  const template = createMessageForStatus(data.orderStatus);
 
   // Prepare template parameters based on status
   const templateParams: Record<string, string> = {
