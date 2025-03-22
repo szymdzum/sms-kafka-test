@@ -1,7 +1,6 @@
 import { extractSmsData, SmsDataValidationError } from '../parser.js';
 import { getXmlValue, clearXmlCache, XML_PARSE_OPTIONS } from '../utils/xml.js';
 import { parseStringPromise } from 'xml2js';
-import { XML_PATHS } from '../config.js';
 
 describe('SMS Parser', () => {
   const validSoapXml = `
@@ -10,7 +9,7 @@ describe('SMS Parser', () => {
         <ProcessCommunication>
           <oa:ApplicationArea>
             <oa:CreationDateTime>2023-03-22T15:30:45.123Z</oa:CreationDateTime>
-            <oa:BODID>ORDER123</oa:BODID>
+            <oa:BODID>TEST456</oa:BODID>
           </oa:ApplicationArea>
           <DataArea>
             <oa:Process>
@@ -58,7 +57,7 @@ describe('SMS Parser', () => {
       brandName: 'MyStore',
       channel: 'WEB',
       channelName: 'Web',
-      orderId: 'ORDER123',
+      orderId: 'TEST456',
       creationDateTime: '2023-03-22T15:30:45.123Z',
       actionExpression: 'SMS'
     });
@@ -268,8 +267,8 @@ describe('XML Path Memoization', () => {
     // Clear cache before test
     clearXmlCache();
 
-    // Use a real path from our configuration
-    const path = XML_PATHS.phoneNumber.path;
+    // Define a test path
+    const path = ['SOAP-ENV:Envelope', 'SOAP-ENV:Body', 0, 'ProcessCommunication', 0, 'DataArea', 0, 'Communication', 0, 'CommunicationHeader', 0, 'CustomerParty', 0, 'Contact', 0, 'SMSTelephoneCommunication', 0, 'oa:FormattedNumber', 0];
 
     // Track performance
     const start1 = performance.now();

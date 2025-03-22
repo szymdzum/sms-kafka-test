@@ -245,9 +245,8 @@ All errors are logged with context for debugging.
 xmlforge/
 ├── __tests__/           # Test files
 ├── utils/              # Utility functions
-│   ├── xml.ts         # XML parsing utilities
-│   └── extractor.ts   # Data extraction utilities
-├── config.ts          # Configuration and constants
+│   └── xml.ts         # XML parsing utilities
+├── config.ts          # Configuration constants
 ├── index.ts           # Main exports
 ├── parser.ts          # Main parser implementation
 ├── types.ts           # TypeScript type definitions
